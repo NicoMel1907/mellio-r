@@ -1,0 +1,4 @@
+Name: Send to Mellio
+Description: Open the selected R expression as a Result Card in the Mellio web app. Highlight an expression (e.g. t.test(...)) and run.
+Binding: mellio_addin_send
+Interactive: false

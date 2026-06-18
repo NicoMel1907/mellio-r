@@ -1,0 +1,178 @@
+---
+title: "Sending R results to Mellio"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Sending R results to Mellio}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE,
+  purl = FALSE
+)
+```
+
+The Mellio R bridge moves statistical results from R into Mellio's
+Stats workspace as structured Result Cards that can be saved, formatted,
+and used in a manuscript.
+
+This vignette walks through the common workflow.
+
+## Setup
+
+By default, `mellio_open()` opens the hosted Mellio app at
+`https://www.mellioapp.com`.
+
+```{r, eval=FALSE}
+# Advanced users can point this at a trusted Mellio deployment:
+# options(mellio.editor_url = "https://www.mellioapp.com")
+```
+
+The R payload is encoded in the URL fragment. URL fragments are not sent as
+HTTP requests to the server, but the full URL can still be visible to the
+browser, the opened web app, browser history, extensions, and anyone the URL
+is shared with.
+
+## Opening a result in Mellio
+
+`mellio_open()` builds a Result Card from a supported R object and opens
+it in your browser.
+
+### t-tests, correlations, non-parametric tests
+
+```{r, eval=FALSE}
+library(mellio)
+
+# Welch's two-sample t-test
+mellio_open(t.test(extra ~ group, data = sleep))
+
+# Pearson correlation
+mellio_open(cor.test(mtcars$mpg, mtcars$wt))
+
+# Chi-squared
+M <- matrix(c(10, 20, 30, 40), nrow = 2)
+mellio_open(chisq.test(M))
+```
+
+The card shows the test statistic, df, p-value, and effect when
+available, formatted in APA 7 style.
+
+### Regression and ANOVA
+
+```{r, eval=FALSE}
+m1 <- lm(mpg ~ wt + cyl, data = mtcars)
+mellio_open(m1)
+
+m2 <- lm(mpg ~ wt + cyl + hp, data = mtcars)
+mellio_open(anova(m1, m2))  # nested model comparison
+```
+
+### Mixed models
+
+```{r, eval=FALSE}
+library(lme4)
+mellio_open(lmer(Reaction ~ Days + (Days | Subject), data = sleepstudy))
+```
+
+`lmer` and `glmer` cards show AIC, logLik, and N inline (lavaan
+gets full fit indices below).
+
+### CFA / SEM / mediation (lavaan)
+
+```{r, eval=FALSE}
+library(lavaan)
+HS.model <- "visual  =~ x1 + x2 + x3
+              textual =~ x4 + x5 + x6
+              speed   =~ x7 + x8 + x9"
+fit <- cfa(HS.model, data = HolzingerSwineford1939)
+mellio_open(fit)
+```
+
+You'll see a **structural** card with two zones:
+
+- **Report zone** — fit indices (χ², CFI, TLI, RMSEA + CI, SRMR,
+  AIC, BIC) with quality badges
+- **Inspection zone** — full parameter table, grouped by lavaan
+  operator (`=~` loadings, `~` regressions, `~~` (co)variances,
+  `~1` intercepts, `:=` defined parameters)
+
+Pre-mark focal paths so they surface in the report zone:
+
+```{r, eval=FALSE}
+mellio_open(fit, focal = c("visual =~ x1", "textual =~ x4"))
+```
+
+### Descriptives
+
+For variable summaries:
+
+```{r, eval=FALSE}
+mellio_open(mtcars$mpg, name = "Fuel efficiency (mpg)")
+# Or from summary() output
+mellio_open(summary(mtcars$mpg))
+```
+
+The card shows *M*, *SD*, *N*, and range.
+
+## What's on the card
+
+Each Result Card carries:
+
+- **Type + call** — what test you ran, deparsed exactly
+- **Extracted fields** — statistic, p, df, estimate, etc.
+- **Formatted preview** — APA 7 inline string, copyable
+- **Provenance** — R and package versions, plus data fingerprints when
+  available
+- **Raw R output** — verbatim `print()` for audit
+
+Local provenance fields such as user name, host name, working directory,
+git state, and script path are opt-in:
+
+```{r, eval=FALSE}
+options(mellio.provenance = "full")
+```
+
+Set `options(mellio.provenance = FALSE)` to omit provenance metadata.
+
+## Saving to Library
+
+The **Save to Library** button on the card persists it. When you're
+signed into Mellio, cards sync to your account and follow you across
+devices. When you're not signed in, cards live in browser
+localStorage.
+
+The Library lists everything you've saved with search and type
+filters. Click any card to reopen it.
+
+## Methods paragraph and reproducibility export
+
+From the Library view:
+
+- **Methods** generates an APA-style Methods paragraph from your
+  saved cards, citing the R packages you actually used (lavaan,
+  lme4, etc.) with versions.
+- **Export** downloads either the full JSON (lossless) or a
+  flattened CSV for inclusion in a reproducibility statement.
+
+## RStudio addin
+
+Once `mellio` is loaded, RStudio's **Addins** menu gets a
+**Send to Mellio** entry. Highlight an R expression (`t.test(...)`)
+and run the addin — same effect as typing `mellio_open()`.
+
+## Non-interactive use
+
+`mellio_open()` opens a browser, which is interactive. For scripts and
+knitr documents, use `mellio_payload()` to get the JSON payload directly
+without launching a browser:
+
+```{r, eval=FALSE}
+p <- mellio_payload(t.test(extra ~ group, data = sleep))
+mellio_to_json(p, pretty = TRUE)
+```
+
+Use `citation("mellio")` for the package citation.
