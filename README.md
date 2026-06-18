@@ -61,6 +61,8 @@ mellio_open("figure.png", title = "Experimental Setup")
 - Italicizes statistical symbols in headers such as B, t, p, F, and df
 - Generates table notes with model fit information where available
 - Supports APA 7th and IEEE table styling
+- Copies or saves finished tables as HTML, LaTeX, or Markdown when a file-based
+  handoff is needed
 
 ### Supported Inputs
 
@@ -72,8 +74,29 @@ mellio_open("figure.png", title = "Experimental Setup")
 | `aov` | `melliotab(model)` | ANOVA table with effect sizes |
 | `htest` | `melliotab(t.test(...))` | Test statistic, df, p-value, confidence interval |
 | `matrix` | `melliotab(cor_matrix)` | Correlation matrix |
-| `lavaan` | `melliotab(fit)` | CFA/SEM loadings, paths, fit indices |
+| `lavaan` | `melliotab(fit, section = "loadings")` | CFA/SEM loadings, paths, fit indices |
+| `psych::fa` | `melliotab(efa_fit)` | EFA loadings, variance, fit indices |
 | `lm`, `glm`, ... | `melliotab(m1, m2, ...)` | Side-by-side model comparison |
+
+### Table Sections
+
+Some statistical objects can produce more than one table. When there is no
+single safe default, Mellio asks you to choose a section. For SEM/CFA models:
+
+```r
+melliotab(sem_fit, section = "loadings")
+melliotab(sem_fit, section = "fit")
+melliotab(sem_fit, section = "paths")
+melliotab(sem_fit, section = "reliability")
+```
+
+EFA defaults to factor loadings, with optional alternatives:
+
+```r
+melliotab(efa_fit)
+melliotab(efa_fit, what = "variance")
+melliotab(efa_fit, what = "fit")
+```
 
 ### Create
 
@@ -84,32 +107,37 @@ melliotab(x, style = "apa7", title = NULL, number = NULL,
 
 ### Modify
 
-All modifiers return the modified object, so you can chain them with `|>`:
+Core table settings go inside `melliotab()` as comma-separated arguments:
 
 ```r
-melliotab(model, title = "Regression Results") |>
-  mt_sig_stars() |>
-  mt_note("Robustness checks are reported in the supplement.")
+melliotab(
+  model,
+  style = "ieee",
+  title = "Predictors of Fuel Efficiency",
+  number = 1,
+  note = "Note. Estimates are unstandardized regression coefficients.",
+  decimals = 2,
+  p_decimals = 3
+)
 ```
 
-The same modifiers also work with ordinary assignment:
+Modifiers such as significance stars and column spanners are added after the
+table exists:
 
 ```r
 model <- lm(mpg ~ wt + hp + factor(cyl), data = mtcars)
 
-tab <- melliotab(
+melliotab(
   model,
+  style = "ieee",
   title = "Predictors of Fuel Efficiency",
   number = 1,
+  note = "Note. Estimates are unstandardized regression coefficients.",
   decimals = 2,
   p_decimals = 3
-)
-tab <- mt_sig_stars(tab)
-tab <- mt_note(
-  tab,
-  "Note. Estimates are unstandardized regression coefficients. Cylinder group is included as a categorical predictor."
-)
-tab
+) |>
+  mt_sig_stars(remove_p = FALSE) |>
+  mt_spanner("95% CI", columns = c("Lower CI", "Upper CI"))
 ```
 
 | Function | Description |
@@ -128,6 +156,20 @@ tab
 | `mt_format_ci(x)` | Merge CI columns into `[low, high]` |
 | `mt_remove_leading_zeros(x)` | Toggle leading zero removal |
 | `mt_simplify_headers(x)` | Shorten verbose SPSS-style headers |
+
+### Advanced Table Output
+
+The default RStudio workflow is to preview the table and copy it for writing
+tools. When you need a file, use the manual output helpers:
+
+```r
+tab <- melliotab(model, title = "Predictors of Fuel Efficiency")
+
+mt_copy(tab)
+mt_save(tab, "regression-table.html")
+mt_save(tab, "regression-table.tex")
+mt_save(tab, "regression-table.md")
+```
 
 ## Model Comparison
 

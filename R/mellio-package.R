@@ -22,6 +22,8 @@
 #' `mt_sig_stars()`, `mt_spanner()`, `mt_section_title()`, and
 #' `mt_simplify_headers()`. Pass two or more model objects to
 #' `melliotab(m1, m2, ...)` to create a side-by-side model comparison table.
+#' For file-based handoff, use `mt_copy()` or `mt_save()` to copy or save a
+#' finished table as HTML, LaTeX, or Markdown.
 #'
 #' @section Privacy and provenance:
 #' By default, Mellio payloads include R/package-version metadata and data
@@ -33,7 +35,8 @@
 #' @section Citation:
 #' Use `citation("mellio")` to get the package citation.
 #'
-#' @seealso [mellio_open()], [melliotab()], [mt_compare()]
+#' @seealso [mellio_open()], [melliotab()], [mt_compare()], [mt_save()],
+#'   [mt_copy()]
 "_PACKAGE"
 
 #' @importFrom rlang %||%

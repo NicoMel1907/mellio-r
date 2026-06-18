@@ -34,6 +34,8 @@ Use \code{melliotab(x)} to create a table, then apply table modifiers such as
 \code{mt_sig_stars()}, \code{mt_spanner()}, \code{mt_section_title()}, and
 \code{mt_simplify_headers()}. Pass two or more model objects to
 \code{melliotab(m1, m2, ...)} to create a side-by-side model comparison table.
+For file-based handoff, use \code{mt_copy()} or \code{mt_save()} to copy or save a
+finished table as HTML, LaTeX, or Markdown.
 }
 
 \section{Privacy and provenance}{
@@ -51,7 +53,8 @@ Use \code{citation("mellio")} to get the package citation.
 }
 
 \seealso{
-\code{\link[=mellio_open]{mellio_open()}}, \code{\link[=melliotab]{melliotab()}}, \code{\link[=mt_compare]{mt_compare()}}
+\code{\link[=mellio_open]{mellio_open()}}, \code{\link[=melliotab]{melliotab()}}, \code{\link[=mt_compare]{mt_compare()}}, \code{\link[=mt_save]{mt_save()}},
+  \code{\link[=mt_copy]{mt_copy()}}
 }
 \author{
 \strong{Maintainer}: Melih Sahin \email{nicomelpro@pm.me}

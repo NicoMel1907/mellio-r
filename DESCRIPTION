@@ -10,8 +10,10 @@ Description: Sends supported R objects to the Mellio web app and creates
     melliotab() interface formats data frames, model summaries, correlation
     matrices, and side-by-side comparison tables with APA-style numeric
     formatting, confidence intervals, table notes, and optional significance
-    markers. Payloads include package-version metadata to support reproducible
-    reporting and software citation.
+    markers. Manual table helpers can copy or save melliotab output as HTML,
+    LaTeX, or Markdown when file-based handoff is needed. Payloads include
+    package-version metadata to support reproducible reporting and software
+    citation.
 License: MIT + file LICENSE
 Depends: R (>= 4.1.0)
 Imports:
