@@ -32,8 +32,8 @@ recorded plot, and image-file inputs.
 Use \code{melliotab(x)} to create a table, then apply table modifiers such as
 \code{mt_title()}, \code{mt_note()}, \code{mt_decimals()}, \code{mt_format_ci()},
 \code{mt_sig_stars()}, \code{mt_spanner()}, \code{mt_section_title()}, and
-\code{mt_simplify_headers()}. Export with \code{mt_save()}, \code{mt_as_html()},
-\code{mt_as_latex()}, \code{mt_as_markdown()}, or \code{mt_copy()}.
+\code{mt_simplify_headers()}. Pass two or more model objects to
+\code{melliotab(m1, m2, ...)} to create a side-by-side model comparison table.
 }
 
 \section{Privacy and provenance}{

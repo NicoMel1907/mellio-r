@@ -5,13 +5,13 @@ Authors@R: person("Melih", "Sahin", role = c("aut", "cre"),
                   email = "nicomelpro@pm.me")
 Description: Sends supported R objects to the Mellio web app and creates
     publication-ready statistical tables in R. The mellio_open() interface
-    handles common hypothesis tests, model objects, descriptive summaries,
-    tabular data, plots, and image files. The melliotab() interface formats
-    data frames, model summaries, correlation matrices, and comparison tables
-    with APA-style numeric formatting, confidence intervals, table notes, and
-    optional significance markers. Tables can be printed in the RStudio viewer
-    or exported to HTML, LaTeX, and Markdown. Payloads include package-version
-    metadata to support reproducible reporting and software citation.
+    handles common hypothesis tests, model objects, model comparisons,
+    descriptive summaries, tabular data, plots, and image files. The
+    melliotab() interface formats data frames, model summaries, correlation
+    matrices, and side-by-side comparison tables with APA-style numeric
+    formatting, confidence intervals, table notes, and optional significance
+    markers. Payloads include package-version metadata to support reproducible
+    reporting and software citation.
 License: MIT + file LICENSE
 Depends: R (>= 4.1.0)
 Imports:

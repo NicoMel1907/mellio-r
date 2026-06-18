@@ -20,8 +20,8 @@
 #' Use `melliotab(x)` to create a table, then apply table modifiers such as
 #' `mt_title()`, `mt_note()`, `mt_decimals()`, `mt_format_ci()`,
 #' `mt_sig_stars()`, `mt_spanner()`, `mt_section_title()`, and
-#' `mt_simplify_headers()`. Export with `mt_save()`, `mt_as_html()`,
-#' `mt_as_latex()`, `mt_as_markdown()`, or `mt_copy()`.
+#' `mt_simplify_headers()`. Pass two or more model objects to
+#' `melliotab(m1, m2, ...)` to create a side-by-side model comparison table.
 #'
 #' @section Privacy and provenance:
 #' By default, Mellio payloads include R/package-version metadata and data

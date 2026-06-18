@@ -1,11 +1,11 @@
 # mellio
 
-R tools for sending statistical results to the Mellio web app and creating
-publication-ready tables in R.
+R tools for sending statistical results, model comparisons, tables, and figures
+to the Mellio web app and creating publication-ready tables in R.
 
-Public beta: Mellio for R supports selected models, tests, tables, and figures
-while the workflow is validated with real users. Please review outputs before
-publication.
+Public beta: Mellio for R supports selected models, tests, model comparisons,
+tables, and figures while the workflow is validated with real users. Please
+review outputs before publication.
 
 ## Installation
 
@@ -27,6 +27,11 @@ mellio_open(model)
 # Create a publication-ready table in R
 tab <- melliotab(model, title = "Predictors of Fuel Efficiency")
 tab
+
+# Compare models side by side
+model_1 <- lm(mpg ~ wt, data = mtcars)
+model_2 <- lm(mpg ~ wt + hp + disp, data = mtcars)
+melliotab(model_1, model_2, labels = c("Step 1", "Step 2"))
 
 # Open a table in Mellio
 mellio_open(tab)
@@ -68,7 +73,7 @@ mellio_open("figure.png", title = "Experimental Setup")
 | `htest` | `melliotab(t.test(...))` | Test statistic, df, p-value, confidence interval |
 | `matrix` | `melliotab(cor_matrix)` | Correlation matrix |
 | `lavaan` | `melliotab(fit)` | CFA/SEM loadings, paths, fit indices |
-| `lm`, `glm`, ... | `mt_compare(m1, m2, ...)` | Side-by-side model comparison |
+| `lm`, `glm`, ... | `melliotab(m1, m2, ...)` | Side-by-side model comparison |
 
 ### Create
 
@@ -85,6 +90,26 @@ All modifiers return the modified object, so you can chain them with `|>`:
 melliotab(model, title = "Regression Results") |>
   mt_sig_stars() |>
   mt_note("Robustness checks are reported in the supplement.")
+```
+
+The same modifiers also work with ordinary assignment:
+
+```r
+model <- lm(mpg ~ wt + hp + factor(cyl), data = mtcars)
+
+tab <- melliotab(
+  model,
+  title = "Predictors of Fuel Efficiency",
+  number = 1,
+  decimals = 2,
+  p_decimals = 3
+)
+tab <- mt_sig_stars(tab)
+tab <- mt_note(
+  tab,
+  "Note. Estimates are unstandardized regression coefficients. Cylinder group is included as a categorical predictor."
+)
+tab
 ```
 
 | Function | Description |
@@ -104,31 +129,26 @@ melliotab(model, title = "Regression Results") |>
 | `mt_remove_leading_zeros(x)` | Toggle leading zero removal |
 | `mt_simplify_headers(x)` | Shorten verbose SPSS-style headers |
 
-### Export
-
-| Function | Description |
-|---|---|
-| `mt_save(x, "file.html")` | Save to file, auto-detected by extension |
-| `mt_copy(x)` | Copy table to clipboard for Word |
-| `mt_as_gt(x)` | Convert to a `gt` table |
-| `mt_as_html(x)` | Export as HTML string |
-| `mt_as_latex(x)` | Export as LaTeX code |
-| `mt_as_markdown(x)` | Export as Markdown table |
-
-Supported file types for `mt_save()`: `.html`, `.tex`, `.md`.
-
 ## Model Comparison
 
 ```r
 model_1 <- lm(mpg ~ wt, data = mtcars)
 model_2 <- lm(mpg ~ wt + hp + disp, data = mtcars)
 
-mt_compare(
+melliotab(
   model_1, model_2,
   title = "Hierarchical Regression: Fuel Efficiency",
-  column.labels = c("Step 1", "Step 2"),
+  labels = c("Step 1", "Step 2"),
   dep.var.labels = "Miles per Gallon"
 )
+```
+
+`mt_compare(model_1, model_2, ...)` remains available as the explicit
+table-comparison helper. For a richer Mellio Stats card with model-level
+R-squared, adjusted R-squared, delta R-squared, and F-change, use:
+
+```r
+mellio_open(mellio_compare(model_1, model_2, labels = c("Step 1", "Step 2")))
 ```
 
 ## Mellio Web Handoff
@@ -138,6 +158,7 @@ Use `mellio_open()` to send supported R objects to the Mellio web app:
 ```r
 mellio_open(t.test(score ~ group, data = my_data))
 mellio_open(lm(mpg ~ wt + cyl, data = mtcars))
+mellio_open(model_1, model_2, labels = c("Step 1", "Step 2"))
 mellio_open(melliotab(model, title = "My Table", number = 1))
 mellio_open(my_data)
 mellio_open(p, title = "My Plot")
