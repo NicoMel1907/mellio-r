@@ -93,8 +93,9 @@ mellio_payload.summaryDefault <- function(x, ..., .call = NULL) {
       q3 = pick("3rd Qu.")
     )
   )
-  if ("NA's" %in% names(x)) {
-    fields$n_missing <- ms_safe_numeric(unname(x[["NA's"]]))
+  missing_value <- ms_summary_missing_value(x)
+  if (!is.na(missing_value)) {
+    fields$n_missing <- missing_value
   }
 
   ms_build_envelope(
@@ -104,4 +105,18 @@ mellio_payload.summaryDefault <- function(x, ..., .call = NULL) {
     fields     = fields,
     raw_output = ms_capture_output(x)
   )
+}
+
+ms_summary_missing_label <- function(label) {
+  label <- trimws(as.character(label %||% ""))
+  normalized <- tolower(gsub("[^[:alnum:]]+", "", label))
+  normalized %in% c("na", "nas", "missing", "nmissing", "nmiss", "missingn")
+}
+
+ms_summary_missing_value <- function(x) {
+  labels <- names(x) %||% character(0)
+  if (!length(labels)) return(NA_real_)
+  idx <- which(vapply(labels, ms_summary_missing_label, logical(1)))
+  if (!length(idx)) return(NA_real_)
+  ms_safe_numeric(unname(x[[idx[[1L]]]]))
 }

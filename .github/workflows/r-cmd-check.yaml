@@ -27,6 +27,9 @@ jobs:
 
       - uses: r-lib/actions/setup-pandoc@v2
 
+      - name: Install system dependencies
+        run: sudo apt-get install -y libnode-dev
+
       - name: Install check dependencies
         run: |
           install.packages(c("remotes", "rcmdcheck", "testthat", "withr", "knitr", "rmarkdown"))

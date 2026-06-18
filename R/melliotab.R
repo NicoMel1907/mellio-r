@@ -295,6 +295,7 @@ summary_default_table <- function(x) {
   }
 
   clean <- vapply(labels, function(label) {
+    if (ms_summary_missing_label(label)) return("Missing")
     switch(label,
       "Min." = "Min",
       "1st Qu." = "Q1",
@@ -302,7 +303,6 @@ summary_default_table <- function(x) {
       "Mean" = "Mean",
       "3rd Qu." = "Q3",
       "Max." = "Max",
-      "NA's" = "Missing",
       label
     )
   }, character(1), USE.NAMES = FALSE)
