@@ -1,11 +1,16 @@
 # mellio
 
-R tools for sending statistical results, model comparisons, tables, and figures
-to the Mellio web app and creating publication-ready tables in R.
+Create publication-ready statistical tables in R and send supported results,
+tables, and figures to the Mellio web app.
 
-Public beta: Mellio for R supports selected models, tests, model comparisons,
-tables, and figures while the workflow is validated with real users. Please
-review outputs before publication.
+Mellio for R has two main workflows:
+
+- `melliotab()` creates formatted tables locally in R.
+- `mellio_open()` opens supported R objects in Mellio for editing, organizing,
+  and reporting.
+
+Review statistical output before publication, especially for complex models or
+objects created by optional packages.
 
 ## Installation
 
@@ -18,70 +23,59 @@ remotes::install_github("NicoMel1907/mellio-r", upgrade = "never")
 ```r
 library(mellio)
 
-# Send statistical results to Mellio
-mellio_open(t.test(extra ~ group, data = sleep))
-
 model <- lm(mpg ~ wt + hp, data = mtcars)
-mellio_open(model)
 
-# Create a publication-ready table in R
+# Create a table in R
 tab <- melliotab(model, title = "Predictors of Fuel Efficiency")
 tab
+
+# Open the model result or finished table in Mellio
+mellio_open(model)
+mellio_open(tab)
 
 # Compare models side by side
 model_1 <- lm(mpg ~ wt, data = mtcars)
 model_2 <- lm(mpg ~ wt + hp + disp, data = mtcars)
-melliotab(model_1, model_2, labels = c("Step 1", "Step 2"))
 
-# Open a table in Mellio
-mellio_open(tab)
+melliotab(model_1, model_2, labels = c("Step 1", "Step 2"))
+mellio_open(model_1, model_2, labels = c("Step 1", "Step 2"))
 ```
 
 `mellio_open()` also accepts tabular data and supported plot/image inputs:
 
 ```r
-# Tables workspace
 mellio_open(mtcars[1:10, 1:4])
 
-# Figures workspace
 library(ggplot2)
 p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
 mellio_open(p, title = "Weight vs. Fuel Efficiency")
 mellio_open("figure.png", title = "Experimental Setup")
 ```
 
-## Tables
+## Tables In R
 
-### What It Does
+`melliotab()` formats common statistical outputs for manuscript-style tables.
+It detects p-values, estimates, confidence intervals, test statistics, integer
+counts, and bounded statistics such as correlations.
 
-- Detects column types such as p-values, estimates, test statistics, and integers
-- Formats p-values as `< .001` when appropriate
-- Removes leading zeros for bounded statistics such as r, p, and beta in APA style
-- Rounds numeric columns to your decimal setting
-- Italicizes statistical symbols in headers such as B, t, p, F, and df
-- Generates table notes with model fit information where available
-- Supports APA 7th and IEEE table styling
-- Copies or saves finished tables as HTML, LaTeX, or Markdown when a file-based
-  handoff is needed
-
-### Supported Inputs
-
-| Object | Function | What it produces |
+| Object | Example | Table output |
 |---|---|---|
-| `data.frame` | `melliotab(df)` | Formatted table with auto-detected columns |
+| `data.frame` | `melliotab(df)` | Formatted data table |
 | `lm` | `melliotab(model)` | Coefficients, confidence intervals, model note |
-| `glm` | `melliotab(model)` | Coefficients with optional odds ratios |
+| `glm` | `melliotab(model)` | Coefficients, with optional odds ratios |
 | `aov` | `melliotab(model)` | ANOVA table with effect sizes |
 | `htest` | `melliotab(t.test(...))` | Test statistic, df, p-value, confidence interval |
 | `matrix` | `melliotab(cor_matrix)` | Correlation matrix |
-| `lavaan` | `melliotab(fit, section = "loadings")` | CFA/SEM loadings, paths, fit indices |
+| `lavaan` | `melliotab(fit, section = "loadings")` | CFA/SEM fit, loadings, paths, effects, reliability |
 | `psych::fa` | `melliotab(efa_fit)` | EFA loadings, variance, fit indices |
-| `lm`, `glm`, ... | `melliotab(m1, m2, ...)` | Side-by-side model comparison |
+| multiple models | `melliotab(m1, m2)` | Side-by-side model comparison |
 
-### Table Sections
+## Choosing Table Sections
 
-Some statistical objects can produce more than one table. When there is no
-single safe default, Mellio asks you to choose a section. For SEM/CFA models:
+Some statistical objects can produce more than one useful table. When there is
+no single safe default, Mellio asks you to choose a section.
+
+For SEM/CFA models:
 
 ```r
 melliotab(sem_fit, section = "loadings")
@@ -98,31 +92,9 @@ melliotab(efa_fit, what = "variance")
 melliotab(efa_fit, what = "fit")
 ```
 
-### Create
+## Common Table Options
 
-```r
-melliotab(x, style = "apa7", title = NULL, number = NULL,
-          note = NULL, decimals = 2, p_decimals = 3)
-```
-
-### Modify
-
-Core table settings go inside `melliotab()` as comma-separated arguments:
-
-```r
-melliotab(
-  model,
-  style = "ieee",
-  title = "Predictors of Fuel Efficiency",
-  number = 1,
-  note = "Note. Estimates are unstandardized regression coefficients.",
-  decimals = 2,
-  p_decimals = 3
-)
-```
-
-Modifiers such as significance stars and column spanners are added after the
-table exists:
+Core table settings are regular `melliotab()` arguments:
 
 ```r
 model <- lm(mpg ~ wt + hp + factor(cyl), data = mtcars)
@@ -132,7 +104,21 @@ melliotab(
   style = "ieee",
   title = "Predictors of Fuel Efficiency",
   number = 1,
-  note = "Note. Estimates are unstandardized regression coefficients.",
+  note = "Estimates are unstandardized regression coefficients.",
+  decimals = 2,
+  p_decimals = 3
+)
+```
+
+Table modifiers can be added with the base R pipe:
+
+```r
+melliotab(
+  model,
+  style = "ieee",
+  title = "Predictors of Fuel Efficiency",
+  number = 1,
+  note = "Estimates are unstandardized regression coefficients.",
   decimals = 2,
   p_decimals = 3
 ) |>
@@ -140,36 +126,62 @@ melliotab(
   mt_spanner("95% CI", columns = c("Lower CI", "Upper CI"))
 ```
 
-| Function | Description |
-|---|---|
-| `mt_title(x, title)` | Set table title |
-| `mt_number(x, number)` | Set table number |
-| `mt_note(x, note)` | Set table note |
-| `mt_source(x, source)` | Set source text |
-| `mt_set_style(x, style)` | Change citation style |
-| `mt_decimals(x, decimals, p_decimals)` | Set decimal places |
-| `mt_sig_stars(x)` | Add significance stars |
-| `mt_spanner(x, label, columns)` | Group columns under a header |
-| `mt_indent(x, rows, level)` | Indent row labels |
-| `mt_section_title(x, label, before)` | Insert a section title row |
-| `mt_diagonal(x, mode, triangle)` | Control correlation matrix display |
-| `mt_format_ci(x)` | Merge CI columns into `[low, high]` |
-| `mt_remove_leading_zeros(x)` | Toggle leading zero removal |
-| `mt_simplify_headers(x)` | Shorten verbose SPSS-style headers |
+Common customization tasks:
 
-### Advanced Table Output
+| Task | Use |
+|---|---|
+| Change citation style | `style = "apa7"` or `style = "ieee"` |
+| Set title, number, or note | `title =`, `number =`, `note =` |
+| Control rounding | `decimals = 2`, `p_decimals = 3` |
+| Add significance stars | `mt_sig_stars(remove_p = FALSE)` |
+| Group related columns | `mt_spanner("95% CI", columns = c("Lower CI", "Upper CI"))` |
+
+Significance stars are never added by default. Use `mt_sig_stars()` only when
+that convention is appropriate for your manuscript, course, or journal.
+
+## Correlation Tables
+
+Correlation matrices can be shown as full matrices or as lower/upper triangles:
+
+```r
+cor_tab <- melliotab(cor(mtcars[, c("mpg", "wt", "hp")]))
+
+cor_tab |>
+  mt_diagonal(mode = "dash", triangle = "lower")
+```
+
+`mode` controls the diagonal cells: `"dash"`, `"one"`, or `"blank"`.
+`triangle` controls which half of the matrix is shown: `"all"`, `"lower"`, or
+`"upper"`.
+
+## Advanced Layout
+
+Use these helpers when you need more control over a table's structure:
+
+```r
+melliotab(model, title = "Predictors of Fuel Efficiency") |>
+  mt_section_title("Cylinder terms", before = 4) |>
+  mt_indent(rows = 4:5, level = 1)
+```
+
+`before` inserts the section title before a row number. `after` can be used
+instead when it is more natural to place the section title after a row.
+`level` controls indentation depth.
+
+## Copy Or Save Tables
 
 The default RStudio workflow is to preview the table and copy it for writing
 tools. When you need a file, use the manual output helpers:
 
 ```r
-tab <- melliotab(model, title = "Predictors of Fuel Efficiency")
-
 mt_copy(tab)
 mt_save(tab, "regression-table.html")
 mt_save(tab, "regression-table.tex")
 mt_save(tab, "regression-table.md")
 ```
+
+`mt_copy()` uses the system clipboard on supported desktop platforms. On other
+systems, use `mt_save()`.
 
 ## Model Comparison
 
@@ -185,9 +197,8 @@ melliotab(
 )
 ```
 
-`mt_compare(model_1, model_2, ...)` remains available as the explicit
-table-comparison helper. For a richer Mellio Stats card with model-level
-R-squared, adjusted R-squared, delta R-squared, and F-change, use:
+For a richer Mellio Stats card with model-level R-squared, adjusted R-squared,
+delta R-squared, and F-change:
 
 ```r
 mellio_open(mellio_compare(model_1, model_2, labels = c("Step 1", "Step 2")))
@@ -195,7 +206,8 @@ mellio_open(mellio_compare(model_1, model_2, labels = c("Step 1", "Step 2")))
 
 ## Mellio Web Handoff
 
-Use `mellio_open()` to send supported R objects to the Mellio web app:
+Use `mellio_open()` when you explicitly want to open an object in the Mellio web
+app:
 
 ```r
 mellio_open(t.test(score ~ group, data = my_data))
@@ -206,22 +218,22 @@ mellio_open(my_data)
 mellio_open(p, title = "My Plot")
 ```
 
-By default `mellio_open()` opens `https://www.mellioapp.com`. Advanced
-users can override the destination with `options("mellio.editor_url")`, but
-should only point it at a trusted Mellio deployment.
+By default `mellio_open()` opens `https://www.mellioapp.com`. Advanced users can
+override the destination with `options("mellio.editor_url")`, but should only
+point it at a trusted Mellio deployment.
 
 ```r
 options(mellio.editor_url = "https://www.mellioapp.com")
 ```
 
-The R payload is encoded in the URL fragment. URL fragments are not sent as
+The handoff data is encoded in the URL fragment. URL fragments are not sent as
 HTTP requests to the server, but the full URL can still be visible to the
-browser, the opened web app, browser history, extensions, and anyone the URL
-is shared with.
+browser, the opened web app, browser history, extensions, and anyone the URL is
+shared with.
 
-Mellio payloads include R/package-version metadata and data fingerprints
-where available. Local machine details such as user name, host name,
-working directory, git state, and script path are opt-in:
+Mellio includes R/package-version metadata and data fingerprints where
+available. Local machine details such as user name, host name, working
+directory, git state, and script path are opt-in:
 
 ```r
 options(mellio.provenance = "full")
