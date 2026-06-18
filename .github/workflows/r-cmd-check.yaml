@@ -5,6 +5,8 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "17 9 * * 1"
 
 permissions:
   contents: read
@@ -29,6 +31,13 @@ jobs:
         run: |
           install.packages(c("remotes", "rcmdcheck", "testthat", "withr", "knitr", "rmarkdown"))
           remotes::install_deps(dependencies = c("Depends", "Imports", "LinkingTo"), upgrade = "never")
+          install.packages(c(
+            "ggplot2", "lattice", "htmlwidgets", "ggExtra", "plotly",
+            "psych", "afex", "effectsize", "emmeans", "multcomp",
+            "ordinal", "forecast", "geepack", "randomForest", "car",
+            "mediation", "lavaan", "lmerTest", "broom.mixed", "lme4",
+            "mgcv", "nnet", "nlme", "performance", "rstatix", "survival"
+          ))
         shell: Rscript {0}
 
       - name: Check package
