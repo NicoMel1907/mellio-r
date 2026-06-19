@@ -1,6 +1,6 @@
 Package: mellio
 Title: Publication-Ready Tables and Statistical Results
-Version: 0.9.0
+Version: 1.0.0
 Authors@R: person("Melih", "Sahin", role = c("aut", "cre"),
                   email = "nicomelpro@pm.me")
 Description: Sends supported R objects to the Mellio web app and creates
