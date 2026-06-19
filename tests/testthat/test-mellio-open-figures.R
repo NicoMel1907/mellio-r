@@ -17,6 +17,27 @@ expect_figure_url <- function(url, title = NULL) {
   }
 }
 
+skip_if_no_webshot_browser <- function() {
+  testthat::skip_if_not_installed("webshot2")
+
+  probe_html <- tempfile(fileext = ".html")
+  probe_png <- tempfile(fileext = ".png")
+  on.exit(unlink(c(probe_html, probe_png), force = TRUE), add = TRUE)
+  writeLines("<!doctype html><html><body></body></html>", probe_html)
+
+  browser_available <- tryCatch({
+    suppressMessages(suppressWarnings(
+      webshot2::webshot(probe_html, file = probe_png, vwidth = 10, vheight = 10)
+    ))
+    file.exists(probe_png)
+  }, error = function(e) FALSE)
+
+  testthat::skip_if(
+    !isTRUE(browser_available),
+    "Chrome/Chromium is not available"
+  )
+}
+
 test_that("mellio_open sends lattice trellis objects through Figures", {
   testthat::skip_if_not_installed("lattice")
   withr::local_options(list(mellio.editor_url = "https://example.com"))
@@ -29,7 +50,7 @@ test_that("mellio_open sends lattice trellis objects through Figures", {
 
 test_that("mellio_open sends htmlwidgets through Figures", {
   testthat::skip_if_not_installed("plotly")
-  testthat::skip_if_not_installed("webshot2")
+  skip_if_no_webshot_browser()
   withr::local_options(list(mellio.editor_url = "https://example.com"))
 
   p <- plotly::plot_ly(mtcars, x = ~wt, y = ~mpg, type = "scatter", mode = "markers")

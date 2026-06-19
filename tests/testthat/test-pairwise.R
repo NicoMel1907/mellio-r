@@ -198,7 +198,6 @@ test_that("rstatix pairwise_wilcox_test payload enriches rank-sum rows", {
   row <- p$fields$rows[[1]]
   group_05 <- ToothGrowth$len[ToothGrowth$dose == 0.5]
   group_1 <- ToothGrowth$len[ToothGrowth$dose == 1]
-  canonical_wilcox <- stats::wilcox.test(group_05, group_1, exact = FALSE)
   delta <- mean(sign(outer(group_05, group_1, "-")))
   labels <- vapply(p$fields$columns, function(col) col$label, character(1))
 
@@ -214,7 +213,7 @@ test_that("rstatix pairwise_wilcox_test payload enriches rank-sum rows", {
   expect_equal(row$median_difference, stats::median(group_05) - stats::median(group_1))
   expect_equal(row$statistic_label, "W")
   expect_equal(row$statistic, fit$statistic[[1]])
-  expect_equal(as.numeric(row$p_raw), as.numeric(canonical_wilcox$p.value), tolerance = 1e-6)
+  expect_equal(row$p_raw, fit$p[[1]])
   expect_equal(row$p_value, fit$p.adj[[1]])
   expect_equal(row$effect_size_name, "cliffs_delta")
   expect_equal(row$effect_size, delta)

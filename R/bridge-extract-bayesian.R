@@ -77,7 +77,8 @@ ms_stanreg_summary_matrix <- function(x) {
 
   ps <- tryCatch({
     if (requireNamespace("rstanarm", quietly = TRUE)) {
-      rstanarm::posterior_summary(x, prob = 0.95)
+      posterior_summary <- getExportedValue("rstanarm", "posterior_summary")
+      posterior_summary(x, prob = 0.95)
     } else {
       NULL
     }

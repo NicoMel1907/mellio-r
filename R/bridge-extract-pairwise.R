@@ -1525,7 +1525,9 @@ ms_rstatix_wilcox_enrich <- function(row, context, by_cols = character(0), by_ro
   fit <- ms_rstatix_wilcox_try_test(row, context, xi, xj, paired = isTRUE(row$paired))
   if (!is.null(fit)) {
     row$statistic <- ms_safe_numeric(unname(fit$statistic[[1L]] %||% row$statistic %||% NA_real_))
-    row$p_raw <- ms_safe_numeric(fit$p.value %||% row$p_raw %||% NA_real_)
+    if (is.null(row$p_raw) || is.na(row$p_raw)) {
+      row$p_raw <- ms_safe_numeric(fit$p.value %||% NA_real_)
+    }
   }
   row
 }
