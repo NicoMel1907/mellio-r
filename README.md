@@ -15,7 +15,7 @@ objects created by optional packages.
 ## Installation
 
 ```r
-remotes::install_github("NicoMel1907/mellio-r", upgrade = "never")
+remotes::install_github("NicoMel1907/mellio-r")
 ```
 
 ## Quick Start

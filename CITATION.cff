@@ -1,0 +1,12 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it using the metadata from this file."
+title: "mellio: Publication-Ready Tables and Statistical Results"
+type: software
+authors:
+  - family-names: Sahin
+    given-names: Melih
+year: 2026
+version: 1.0.0
+url: "https://github.com/NicoMel1907/mellio-r"
+repository-code: "https://github.com/NicoMel1907/mellio-r"
+license: MIT
