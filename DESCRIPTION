@@ -1,10 +1,10 @@
 Package: mellio
-Title: Publication-Ready Tables and Statistical Results
+Title: Polished, Editable Tables and Statistical Results
 Version: 1.0.0
 Authors@R: person("Melih", "Sahin", role = c("aut", "cre"),
                   email = "nicomelpro@pm.me")
 Description: Sends supported R objects to the Mellio web app and creates
-    publication-ready statistical tables in R. The mellio_open() interface
+    polished, editable statistical tables in R. The mellio_open() interface
     handles common hypothesis tests, model objects, model comparisons,
     descriptive summaries, tabular data, plots, and image files. The
     melliotab() interface formats data frames, model summaries, correlation

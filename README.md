@@ -1,6 +1,6 @@
 # mellio
 
-Create publication-ready statistical tables in R and send supported results,
+Create polished, editable statistical tables in R and send supported results,
 tables, and figures to the Mellio web app.
 
 Mellio for R has two main workflows:
@@ -28,9 +28,11 @@ model <- lm(mpg ~ wt + hp, data = mtcars)
 # Create a table in R
 melliotab(model, title = "Predictors of Fuel Efficiency")
 
-# Open the model result or finished table in Mellio
+# Open the model result in Mellio
 mellio_open(model)
-mellio_open(melliotab(model, title = "Predictors of Fuel Efficiency"))
+
+# Open tabular data in Mellio
+mellio_open(mtcars[1:10, 1:4])
 
 # Compare models side by side
 model_1 <- lm(mpg ~ wt, data = mtcars)
@@ -40,11 +42,9 @@ melliotab(model_1, model_2, labels = c("Step 1", "Step 2"))
 mellio_open(model_1, model_2, labels = c("Step 1", "Step 2"))
 ```
 
-`mellio_open()` also accepts tabular data and supported plot/image inputs:
+`mellio_open()` also accepts supported plot/image inputs:
 
 ```r
-mellio_open(mtcars[1:10, 1:4])
-
 library(ggplot2)
 p <- ggplot(mtcars, aes(wt, mpg)) + geom_point()
 mellio_open(p, title = "Weight vs. Fuel Efficiency")
@@ -147,7 +147,6 @@ Quick reference:
 | `mt_copy()` | Copies a table to the clipboard | No required values |
 | `mt_save()` | Saves a table to a file | `.html`, `.tex`, `.md` |
 | `mt_as_html()`, `mt_as_gt()`, `mt_as_latex()`, `mt_as_markdown()` | Returns a table in another format | HTML, `gt`, LaTeX, Markdown |
-| `mt_compare()` | Creates a side-by-side model comparison table | `labels`, `dep.var.labels`, `stars`, `stats`, `se.type` |
 
 Significance stars are never added by default. Use `mt_sig_stars()` only when
 that convention is appropriate for your manuscript, course, or journal.
@@ -200,6 +199,8 @@ systems, use `mt_save()`.
 
 ## Model Comparison
 
+Use `melliotab()` when you want a side-by-side model comparison table:
+
 ```r
 model_1 <- lm(mpg ~ wt, data = mtcars)
 model_2 <- lm(mpg ~ wt + hp + disp, data = mtcars)
@@ -212,8 +213,15 @@ melliotab(
 )
 ```
 
-For a richer Mellio Stats card with model-level R-squared, adjusted R-squared,
-delta R-squared, and F-change:
+The same comparison can be opened in Mellio:
+
+```r
+mellio_open(model_1, model_2, labels = c("Step 1", "Step 2"))
+```
+
+For hierarchical or nested regression reporting in the Stats workspace, use
+`mellio_compare()` only when you specifically need model-level R-squared,
+adjusted R-squared, delta R-squared, and F-change:
 
 ```r
 mellio_open(mellio_compare(model_1, model_2, labels = c("Step 1", "Step 2")))

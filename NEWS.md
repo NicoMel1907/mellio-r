@@ -14,7 +14,7 @@ Initial public release.
 
 ## Tables in R
 
-* `melliotab()` creates publication-ready tables directly in R for data frames,
+* `melliotab()` creates polished, editable tables directly in R for data frames,
   model summaries, correlation matrices, and side-by-side model comparisons.
 * Table helpers support APA 7 and IEEE styling, p-value formatting,
   significance stars, column spanners, table notes, and HTML/LaTeX/Markdown

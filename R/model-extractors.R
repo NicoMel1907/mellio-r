@@ -295,7 +295,7 @@ melliotab.lavaan <- function(x, style = "apa7", title = NULL,
 #'   `"comparison"` = chi-squared difference test,
 #'   `"fit"` = model fit indices,
 #'   `"diff"` = differences in fit indices.
-#'   Must be specified — calling without `what` shows available options.
+#'   Must be specified; calling without `what` shows available options.
 #' @export
 melliotab.FitDiff <- function(x, style = "apa7", title = NULL,
                                number = NULL, note = NULL,

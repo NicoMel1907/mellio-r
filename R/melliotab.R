@@ -1,4 +1,4 @@
-#' Create a publication-ready table
+#' Create a formatted statistical table
 #'
 #' The main entry point for melliotab. Accepts data frames, model objects,
 #' or correlation matrices and formats them according to the specified
@@ -13,7 +13,6 @@
 #' @param ... Additional arguments passed to methods
 #' @return A melliotab object
 #' @export
-#' @seealso [mt_compare()] for the explicit model-comparison helper.
 #' @section Supported inputs:
 #' `melliotab()` is intended for table output inside R. It supports plain data
 #' frames, matrices, base `table` objects, correlation matrices, common model

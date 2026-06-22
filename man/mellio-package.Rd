@@ -4,7 +4,7 @@
 \name{mellio-package}
 \alias{mellio}
 \alias{mellio-package}
-\title{mellio: Publication-Ready Tables and Statistical Results}
+\title{mellio: Polished, Editable Tables and Statistical Results}
 \description{
 mellio provides two main workflows:
 }
@@ -13,7 +13,7 @@ mellio provides two main workflows:
 \item \code{mellio_open()} sends supported R objects to the Mellio web app.
 Statistical results open as Result Cards, tabular data opens in the
 Tables workspace, and supported plots or image files open in Figures.
-\item \code{melliotab()} creates publication-ready tables directly in R for data
+\item \code{melliotab()} creates polished, editable tables directly in R for data
 frames, model summaries, correlation matrices, and model comparisons.
 }
 }
@@ -75,7 +75,7 @@ Use \code{citation("mellio")} to get the package citation.
 }
 
 \seealso{
-\code{\link[=mellio_open]{mellio_open()}}, \code{\link[=melliotab]{melliotab()}}, \code{\link[=mt_compare]{mt_compare()}}, \code{\link[=mt_save]{mt_save()}},
+\code{\link[=mellio_open]{mellio_open()}}, \code{\link[=melliotab]{melliotab()}}, \code{\link[=mt_save]{mt_save()}},
 \code{\link[=mt_copy]{mt_copy()}}
 }
 \author{

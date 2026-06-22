@@ -1,11 +1,11 @@
-#' mellio: Publication-Ready Tables and Statistical Results
+#' mellio: Polished, Editable Tables and Statistical Results
 #'
 #' mellio provides two main workflows:
 #'
 #' * `mellio_open()` sends supported R objects to the Mellio web app.
 #'   Statistical results open as Result Cards, tabular data opens in the
 #'   Tables workspace, and supported plots or image files open in Figures.
-#' * `melliotab()` creates publication-ready tables directly in R for data
+#' * `melliotab()` creates polished, editable tables directly in R for data
 #'   frames, model summaries, correlation matrices, and model comparisons.
 #'
 #' @section Common `mellio_open()` inputs:
@@ -55,7 +55,7 @@
 #' @section Citation:
 #' Use `citation("mellio")` to get the package citation.
 #'
-#' @seealso [mellio_open()], [melliotab()], [mt_compare()], [mt_save()],
+#' @seealso [mellio_open()], [melliotab()], [mt_save()],
 #'   [mt_copy()]
 "_PACKAGE"
 

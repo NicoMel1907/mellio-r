@@ -23,7 +23,7 @@
 \alias{melliotab.lavaan}
 \alias{melliotab.FitDiff}
 \alias{melliotab.fa}
-\title{Create a publication-ready table}
+\title{Create a formatted statistical table}
 \usage{
 \method{melliotab}{mediate}(
   x,
@@ -261,7 +261,7 @@ structural model payloads.}
 \code{"comparison"} = chi-squared difference test,
 \code{"fit"} = model fit indices,
 \code{"diff"} = differences in fit indices.
-Must be specified — calling without \code{what} shows available options.}
+Must be specified; calling without \code{what} shows available options.}
 
 \item{standardized}{Include standardized estimates (default TRUE)}
 
@@ -326,7 +326,4 @@ melliotab(
   labels = c("Step 1", "Step 2", "Step 3"),
   dep.var.labels = "Ozone concentration"
 )
-}
-\seealso{
-\code{\link[=mt_compare]{mt_compare()}} for the explicit model-comparison helper.
 }

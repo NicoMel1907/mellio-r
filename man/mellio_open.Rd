@@ -82,8 +82,6 @@ if (interactive()) {
 }
 }
 \seealso{
-\code{\link[=mt_compare]{mt_compare()}} for model comparison table options.
-
 Other R bridge: 
 \code{\link{mellio_addin_send}()},
 \code{\link{mellio_capture}()},

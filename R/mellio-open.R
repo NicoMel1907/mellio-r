@@ -44,7 +44,6 @@
 #' @return Invisibly, the URL string.
 #' @export
 #' @family R bridge
-#' @seealso [mt_compare()] for model comparison table options.
 #' @examples
 #' \donttest{
 #' if (interactive()) {

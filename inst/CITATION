@@ -2,7 +2,7 @@ citHeader("To cite mellio in publications, use:")
 
 bibentry(
   bibtype = "Manual",
-  title = "mellio: Publication-Ready Tables and Statistical Results",
+  title = "mellio: Polished, Editable Tables and Statistical Results",
   author = person("Melih", "Sahin"),
   year = "2026",
   note = paste("R package version", meta$Version)
