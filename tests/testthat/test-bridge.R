@@ -4708,7 +4708,7 @@ test_that("payload includes minimal provenance and packages by default", {
   p <- mellio_payload(t.test(extra ~ group, data = sleep))
 
   expect_true(!is.null(p$provenance))
-  expect_match(p$provenance$r_version, "^R version")
+  expect_equal(p$provenance$r_version, R.version.string)
   expect_true(nzchar(p$provenance$platform))
   expect_true(nzchar(p$provenance$mellio_version))
   expect_null(p$provenance$working_dir)

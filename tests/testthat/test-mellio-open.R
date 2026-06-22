@@ -87,7 +87,7 @@ test_that("mellio_open on a bare data.frame routes to Tables, not Stats", {
   expect_no_match(url, "#stats/payload=", fixed = TRUE)
   expect_match(url, "provenance=", fixed = TRUE)
   provenance <- decode_base64_json_param(url, "provenance")
-  expect_match(provenance$r_version, "^R version")
+  expect_equal(provenance$r_version, R.version.string)
 })
 
 test_that("mellio_open on melliotab built from a data.frame routes to Tables", {
