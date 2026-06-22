@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it using the metadata from this file."
-title: "mellio: Publication-Ready Tables and Statistical Results"
+title: "mellio: Polished, Editable Tables and Statistical Results"
 type: software
 authors:
   - family-names: Sahin
