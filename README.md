@@ -26,12 +26,11 @@ library(mellio)
 model <- lm(mpg ~ wt + hp, data = mtcars)
 
 # Create a table in R
-tab <- melliotab(model, title = "Predictors of Fuel Efficiency")
-tab
+melliotab(model, title = "Predictors of Fuel Efficiency")
 
 # Open the model result or finished table in Mellio
 mellio_open(model)
-mellio_open(tab)
+mellio_open(melliotab(model, title = "Predictors of Fuel Efficiency"))
 
 # Compare models side by side
 model_1 <- lm(mpg ~ wt, data = mtcars)
@@ -126,15 +125,29 @@ melliotab(
   mt_spanner("95% CI", columns = c("Lower CI", "Upper CI"))
 ```
 
-Common customization tasks:
+Quick reference:
 
-| Task | Use |
-|---|---|
-| Change citation style | `style = "apa7"` or `style = "ieee"` |
-| Set title, number, or note | `title =`, `number =`, `note =` |
-| Control rounding | `decimals = 2`, `p_decimals = 3` |
-| Add significance stars | `mt_sig_stars(remove_p = FALSE)` |
-| Group related columns | `mt_spanner("95% CI", columns = c("Lower CI", "Upper CI"))` |
+| Function or option | What it does | Common values |
+|---|---|---|
+| `melliotab()` | Creates a formatted table in R | `style = "apa7"` or `"ieee"` |
+| `mellio_open()` | Opens supported objects in Mellio | Models, tests, tables, data, plots |
+| `style` / `mt_set_style()` | Sets or changes table style | `"apa7"`, `"ieee"` |
+| `title` / `mt_title()` | Sets the table title | Text |
+| `number` / `mt_number()` | Sets the table number | Number or text |
+| `note` / `mt_note()` | Adds a table note | Text |
+| `source` / `mt_source()` | Adds source text | Text |
+| `decimals`, `p_decimals` / `mt_decimals()` | Controls rounding | `decimals = 2`, `p_decimals = 3` |
+| `mt_sig_stars()` | Adds significance stars to an existing table | `remove_p = TRUE` or `FALSE` |
+| `mt_remove_leading_zeros()` | Controls leading zeros in bounded statistics | `TRUE`, `FALSE` |
+| `mt_diagonal()` | Formats correlation matrices | `mode = "dash"`, `"one"`, or `"blank"`; `triangle = "lower"`, `"upper"`, or `"all"` |
+| `mt_spanner()` | Adds a spanning column header | Label text and column names or numbers |
+| `mt_section_title()` | Adds a section-title row | `before =` or `after =` a row number |
+| `mt_indent()` | Indents selected rows | `rows =`, `level = 1`, `2`, or `3` |
+| `mt_simplify_headers()` | Shortens verbose imported headers | No required values |
+| `mt_copy()` | Copies a table to the clipboard | No required values |
+| `mt_save()` | Saves a table to a file | `.html`, `.tex`, `.md` |
+| `mt_as_html()`, `mt_as_gt()`, `mt_as_latex()`, `mt_as_markdown()` | Returns a table in another format | HTML, `gt`, LaTeX, Markdown |
+| `mt_compare()` | Creates a side-by-side model comparison table | `labels`, `dep.var.labels`, `stars`, `stats`, `se.type` |
 
 Significance stars are never added by default. Use `mt_sig_stars()` only when
 that convention is appropriate for your manuscript, course, or journal.
@@ -174,10 +187,12 @@ The default RStudio workflow is to preview the table and copy it for writing
 tools. When you need a file, use the manual output helpers:
 
 ```r
-mt_copy(tab)
-mt_save(tab, "regression-table.html")
-mt_save(tab, "regression-table.tex")
-mt_save(tab, "regression-table.md")
+table_for_word <- melliotab(model, title = "Predictors of Fuel Efficiency")
+
+mt_copy(table_for_word)
+mt_save(table_for_word, "regression-table.html")
+mt_save(table_for_word, "regression-table.tex")
+mt_save(table_for_word, "regression-table.md")
 ```
 
 `mt_copy()` uses the system clipboard on supported desktop platforms. On other
