@@ -200,6 +200,7 @@ melliotab(x, ...)
   number = NULL,
   note = NULL,
   source = NULL,
+  section = NULL,
   what = NULL,
   decimals = 2L,
   p_decimals = 3L,
@@ -213,7 +214,8 @@ melliotab(x, ...)
   number = NULL,
   note = NULL,
   source = NULL,
-  what = "loadings",
+  section = NULL,
+  what = NULL,
   cut = 0,
   sort = FALSE,
   decimals = 2L,
@@ -240,10 +242,11 @@ melliotab(x, ...)
 
 \item{...}{Additional arguments passed to methods}
 
-\item{section}{Optional section selector for multi-section payload-backed
-tables, such as \code{"fit"}, \code{"loadings"}, \code{"paths"}, \code{"covariances"},
-\code{"defined"}, \code{"reliability"}, or \code{"modification_indices"} for
-structural model payloads.}
+\item{section}{Optional section selector for multi-section tables. Examples
+include \code{"fit"}, \code{"loadings"}, \code{"paths"}, \code{"covariances"}, \code{"defined"},
+\code{"reliability"}, or \code{"modification_indices"} for structural model
+payloads; \code{"loadings"}, \code{"variance"}, or \code{"fit"} for EFA; and
+\code{"comparison"}, \code{"fit"}, or \code{"diff"} for FitDiff objects.}
 
 \item{conf.int}{Include confidence intervals (default TRUE)}
 
@@ -257,11 +260,8 @@ structural model payloads.}
 
 \item{triangle}{Which triangle to show: "all", "lower", "upper"}
 
-\item{what}{For FitDiff objects: which table to produce.
-\code{"comparison"} = chi-squared difference test,
-\code{"fit"} = model fit indices,
-\code{"diff"} = differences in fit indices.
-Must be specified; calling without \code{what} shows available options.}
+\item{what}{Backward-compatible alias for \code{section} in methods that
+previously used \code{what}. Prefer \code{section}.}
 
 \item{standardized}{Include standardized estimates (default TRUE)}
 

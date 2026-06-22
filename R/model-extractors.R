@@ -261,8 +261,6 @@ melliotab.matrix <- function(x, style = "apa7", title = NULL,
 }
 
 #' @rdname melliotab
-#' @param what Which table section to extract from multi-section objects.
-#'   Backward-compatible alias for `section`.
 #' @param standardized Include standardized estimates (default TRUE)
 #' @export
 melliotab.lavaan <- function(x, style = "apa7", title = NULL,
@@ -272,7 +270,7 @@ melliotab.lavaan <- function(x, style = "apa7", title = NULL,
                               p_decimals = 3L, ...) {
   rlang::check_installed("lavaan", reason = "to extract lavaan model results")
 
-  if (is.null(section) && !is.null(what)) section <- what
+  section <- mellio_resolve_section(section = section, what = what)
   payload <- mellio_payload(x, standardized = standardized, ...)
   result <- melliotab_from_payload(
     payload,
@@ -291,21 +289,18 @@ melliotab.lavaan <- function(x, style = "apa7", title = NULL,
 }
 
 #' @rdname melliotab
-#' @param what For FitDiff objects: which table to produce.
-#'   `"comparison"` = chi-squared difference test,
-#'   `"fit"` = model fit indices,
-#'   `"diff"` = differences in fit indices.
-#'   Must be specified; calling without `what` shows available options.
 #' @export
 melliotab.FitDiff <- function(x, style = "apa7", title = NULL,
                                number = NULL, note = NULL,
-                               source = NULL, what = NULL,
+                               source = NULL, section = NULL, what = NULL,
                                decimals = 2L, p_decimals = 3L, ...) {
   rlang::check_installed("semTools",
     reason = "to extract FitDiff model comparisons"
   )
 
-  if (is.null(what)) {
+  section <- mellio_resolve_section(section = section, what = what)
+
+  if (is.null(section)) {
     # Build a preview of what's available
     sections <- character(0)
     nested <- methods::slot(x, "nested")
@@ -333,15 +328,15 @@ melliotab.FitDiff <- function(x, style = "apa7", title = NULL,
 
     cli::cli_abort(c(
       "FitDiff objects contain multiple tables.",
-      "i" = "Specify {.arg what} to choose which table:",
+      "i" = "Specify {.arg section} to choose which table:",
       set_names(sections, rep("*", length(sections))),
-      "i" = 'Example: {.code melliotab(x, what = "fit")}'
+      "i" = 'Example: {.code melliotab(x, section = "fit")}'
     ))
   }
 
-  what <- match.arg(what, c("comparison", "fit", "diff"))
+  section <- match.arg(section, c("comparison", "fit", "diff"))
 
-  switch(what,
+  switch(section,
     comparison = .fitdiff_comparison(x, style, title, number, note,
       source, decimals, p_decimals, ...),
     fit = .fitdiff_fit(x, style, title, number, note,
@@ -504,12 +499,17 @@ melliotab.FitDiff <- function(x, style = "apa7", title = NULL,
 #' @export
 melliotab.fa <- function(x, style = "apa7", title = NULL,
                           number = NULL, note = NULL,
-                          source = NULL, what = "loadings",
+                          source = NULL, section = NULL, what = NULL,
                           cut = 0, sort = FALSE,
                           decimals = 2L, p_decimals = 3L, ...) {
-  what <- match.arg(what, c("loadings", "variance", "fit"))
+  section <- mellio_resolve_section(
+    section = section,
+    what = what,
+    default = "loadings",
+    choices = c("loadings", "variance", "fit")
+  )
 
-  switch(what,
+  switch(section,
     loadings = .fa_loadings_table(x, style, title, number, note,
       source, cut, sort, decimals, p_decimals, ...),
     variance = .fa_variance_table(x, style, title, number, note,

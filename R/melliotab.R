@@ -6,10 +6,13 @@
 #' model comparison table.
 #'
 #' @param x A data.frame, model object (lm, glm, aov, htest), or correlation matrix
-#' @param section Optional section selector for multi-section payload-backed
-#'   tables, such as `"fit"`, `"loadings"`, `"paths"`, `"covariances"`,
-#'   `"defined"`, `"reliability"`, or `"modification_indices"` for
-#'   structural model payloads.
+#' @param section Optional section selector for multi-section tables. Examples
+#'   include `"fit"`, `"loadings"`, `"paths"`, `"covariances"`, `"defined"`,
+#'   `"reliability"`, or `"modification_indices"` for structural model
+#'   payloads; `"loadings"`, `"variance"`, or `"fit"` for EFA; and
+#'   `"comparison"`, `"fit"`, or `"diff"` for FitDiff objects.
+#' @param what Backward-compatible alias for `section` in methods that
+#'   previously used `what`. Prefer `section`.
 #' @param ... Additional arguments passed to methods
 #' @return A melliotab object
 #' @export

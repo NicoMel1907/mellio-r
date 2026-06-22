@@ -6,7 +6,7 @@ melliotab_from_payload <- function(payload, section = NULL,
                                    source = NULL,
                                    decimals = 2L, p_decimals = 3L,
                                    what = NULL, ...) {
-  if (is.null(section) && !is.null(what)) section <- what
+  section <- mellio_resolve_section(section = section, what = what)
   card_kind <- payload$card_kind %||% "inline"
 
   if (identical(payload$type, "hierarchical_regression_comparison")) {
@@ -47,6 +47,23 @@ melliotab_from_payload <- function(payload, section = NULL,
   )
   result$model <- payload
   result
+}
+
+mellio_resolve_section <- function(section = NULL, what = NULL,
+                                   default = NULL, choices = NULL) {
+  if (!is.null(section) && !is.null(what) &&
+      !identical(as.character(section), as.character(what))) {
+    cli::cli_abort(c(
+      "{.arg section} and {.arg what} specify different table sections.",
+      "i" = "Use {.arg section}; {.arg what} is kept only as a compatibility alias."
+    ))
+  }
+
+  value <- section %||% what %||% default
+  if (is.null(value)) return(NULL)
+  value <- as.character(value[[1L]])
+  if (!is.null(choices)) value <- match.arg(value, choices)
+  value
 }
 
 payload_hierarchical_comparison_to_df <- function(payload) {

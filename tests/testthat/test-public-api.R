@@ -21,6 +21,7 @@ test_that("only unified bridge names are exported", {
     "ms_payload",
     "ms_to_json",
     "ms_compare",
+    "mt_compare",
     "ms_addin_send"
   ) %in% exported))
 })

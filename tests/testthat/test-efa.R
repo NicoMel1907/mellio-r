@@ -73,6 +73,25 @@ test_that("an EFA payload serialises to JSON", {
   expect_true(nchar(as.character(json)) > 0)
 })
 
+test_that("melliotab.fa uses section with what as a compatibility alias", {
+  skip_if_not_installed("psych")
+  fit <- suppressWarnings(
+    psych::fa(mtcars[, c("mpg", "hp", "wt", "disp")], nfactors = 1)
+  )
+
+  default_tab <- melliotab(fit)
+  variance_tab <- melliotab(fit, section = "variance")
+  legacy_variance_tab <- melliotab(fit, what = "variance")
+
+  expect_s3_class(default_tab, "melliotab")
+  expect_s3_class(variance_tab, "melliotab")
+  expect_equal(variance_tab$data, legacy_variance_tab$data)
+  expect_error(
+    melliotab(fit, section = "fit", what = "variance"),
+    "different table sections"
+  )
+})
+
 test_that("mellio_payload.factanal builds an EFA loadings table card", {
   vars <- c("mpg", "hp", "wt", "disp", "drat", "qsec")
   fit <- suppressWarnings(factanal(mtcars[, vars], factors = 2))

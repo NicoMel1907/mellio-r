@@ -66,7 +66,7 @@ counts, and bounded statistics such as correlations.
 | `htest` | `melliotab(t.test(...))` | Test statistic, df, p-value, confidence interval |
 | `matrix` | `melliotab(cor_matrix)` | Correlation matrix |
 | `lavaan` | `melliotab(fit, section = "loadings")` | CFA/SEM fit, loadings, paths, effects, reliability |
-| `psych::fa` | `melliotab(efa_fit)` | EFA loadings, variance, fit indices |
+| `psych::fa` | `melliotab(efa_fit, section = "loadings")` | EFA loadings, variance, fit indices |
 | multiple models | `melliotab(m1, m2)` | Side-by-side model comparison |
 
 ## Choosing Table Sections
@@ -87,8 +87,8 @@ EFA defaults to factor loadings, with optional alternatives:
 
 ```r
 melliotab(efa_fit)
-melliotab(efa_fit, what = "variance")
-melliotab(efa_fit, what = "fit")
+melliotab(efa_fit, section = "variance")
+melliotab(efa_fit, section = "fit")
 ```
 
 ## Common Table Options
@@ -131,6 +131,7 @@ Quick reference:
 |---|---|---|
 | `melliotab()` | Creates a formatted table in R | `style = "apa7"` or `"ieee"` |
 | `mellio_open()` | Opens supported objects in Mellio | Models, tests, tables, data, plots |
+| `section` | Chooses a sub-table for multi-section objects | `"fit"`, `"loadings"`, `"variance"` |
 | `style` / `mt_set_style()` | Sets or changes table style | `"apa7"`, `"ieee"` |
 | `title` / `mt_title()` | Sets the table title | Text |
 | `number` / `mt_number()` | Sets the table number | Number or text |
