@@ -1,0 +1,56 @@
+name: Bug report
+description: Something in the mellio R package errored or formatted incorrectly.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. This tracker is for the **mellio R package**.
+        For questions about using the Mellio web app, email help@mellioapp.com.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you expect, and what did you get? Paste any error message in full.
+      placeholder: |
+        I ran melliotab() on a glm and got <error / wrong formatting>, but expected ...
+    validations:
+      required: true
+  - type: textarea
+    id: reprex
+    attributes:
+      label: Minimal reproducible example
+      description: >
+        The smallest code that triggers it — the model/object and the mellio call.
+        Please use a built-in dataset (mtcars, sleep, iris, ...) where possible.
+      render: r
+      placeholder: |
+        library(mellio)
+        m <- glm(am ~ wt, family = binomial, data = mtcars)
+        melliotab(m)
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: mellio version
+      description: Output of packageVersion("mellio").
+      placeholder: "1.0.0"
+    validations:
+      required: true
+  - type: textarea
+    id: session
+    attributes:
+      label: Session info
+      description: Paste sessionInfo() — or at least your R version and operating system.
+      render: text
+    validations:
+      required: false
+  - type: input
+    id: handoff
+    attributes:
+      label: For mellio_open() / web handoff issues only
+      description: Which browser, and which workspace (Stats / Tables / Figures)?
+      placeholder: "Chrome — Tables workspace"
+    validations:
+      required: false
