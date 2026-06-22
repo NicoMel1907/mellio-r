@@ -5,3 +5,7 @@
 ^.*\.DS_Store$
 ^\.github$
 ^CITATION\.cff$
+^mellio_.*\.tar\.gz$
+^cran-check.*
+^check-local$
+^cran-comments\.md$
