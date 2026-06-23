@@ -771,7 +771,7 @@ ms_data_frame_hint <- function(x) {
     "Supported table shapes include correlations (r, p), ANOVA",
     "(term, df1, df2, F, p), coefficients (term, estimate, p.value),",
     "effect sizes (Cohen's d, eta-squared, CI), and descriptives (M, SD, n).",
-    "For manuscript-ready tables, use mellio_open(melliotab(x)).",
+    "For a formatted table you can review or edit, use mellio_open(melliotab(x)).",
     sep = "\n"
   )
 }
