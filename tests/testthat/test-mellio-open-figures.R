@@ -86,6 +86,8 @@ test_that("mellio_open sends simple ggplots with editable raw scatter data", {
   expect_figure_url(url, "Fuel efficiency by weight")
   expect_match(url, "figurePayload=", fixed = TRUE)
   expect_match(url, "figureType=raw_scatter", fixed = TRUE)
+  expect_lt(regexpr("figurePayload=", url, fixed = TRUE)[[1]],
+            regexpr("imageData=", url, fixed = TRUE)[[1]])
 
   payload <- decode_figure_payload(url)
   scatter <- payload$figure_data$raw_scatter

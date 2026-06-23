@@ -164,24 +164,9 @@ mellio_figure_edit_url <- function(x) {
   url <- paste0(sub("/+$", "", base), "/#mode=figure",
                 mellio_launch_hash_param())
 
-  # Try to include compressed image data
-  img_b64 <- compress_image_for_url(x)
-  if (!is.null(img_b64)) {
-    mime <- attr(img_b64, "mime") %||% "image/jpeg"
-    img_data_uri <- paste0("data:", mime, ";base64,", img_b64)
-    encoded_img <- utils::URLencode(img_data_uri, reserved = TRUE)
-    # Check URL length — browsers handle ~2MB URLs
-    if (nchar(encoded_img) < 2000000) {
-      url <- paste0(url, "&imageData=", encoded_img)
-    } else {
-      cli::cli_inform(c(
-        "i" = "Image too large for URL transfer. Please upload it in Mellio."
-      ))
-    }
-  }
-
-  # Add editable figure recipe when available. The static image remains in the
-  # URL as a fallback for older Mellio builds or unsupported recipe rendering.
+  # Put editable figure data before the static image fallback. Some URL
+  # openers tolerate long hashes poorly; if a tail is lost, the recipe should
+  # survive before the larger imageData parameter.
   if (!is.null(x$recipe_payload)) {
     recipe_json <- jsonlite::toJSON(x$recipe_payload, auto_unbox = TRUE,
                                     null = "null", na = "null", digits = NA)
@@ -196,6 +181,22 @@ mellio_figure_edit_url <- function(x) {
     } else {
       cli::cli_inform(c(
         "i" = "Editable figure data is too large for URL transfer. Sending a static figure instead."
+      ))
+    }
+  }
+
+  # Try to include compressed image data
+  img_b64 <- compress_image_for_url(x)
+  if (!is.null(img_b64)) {
+    mime <- attr(img_b64, "mime") %||% "image/jpeg"
+    img_data_uri <- paste0("data:", mime, ";base64,", img_b64)
+    encoded_img <- utils::URLencode(img_data_uri, reserved = TRUE)
+    # Check URL length — browsers handle ~2MB URLs
+    if (nchar(encoded_img) < 2000000) {
+      url <- paste0(url, "&imageData=", encoded_img)
+    } else {
+      cli::cli_inform(c(
+        "i" = "Image too large for URL transfer. Please upload it in Mellio."
       ))
     }
   }
