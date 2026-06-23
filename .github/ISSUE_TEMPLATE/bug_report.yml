@@ -6,7 +6,7 @@ body:
     attributes:
       value: |
         Thanks for reporting. This tracker is for the **mellio R package**.
-        For questions about using the Mellio web app, email help@mellioapp.com.
+        For questions about using the Mellio web app, email hello@mellioapp.com.
   - type: textarea
     id: what
     attributes:
