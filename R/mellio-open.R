@@ -208,7 +208,10 @@ mellio_open_dispatch.table <- function(x, browse = TRUE, ..., .call = NULL) {
 
 #' @export
 mellio_open_dispatch.gg <- function(x, browse = TRUE, ..., .call = NULL) {
-  send_figure_to_mellio(mellio_open_figure_from_gg(x, ...), browse = browse)
+  send_figure_to_mellio(
+    mellio_open_figure_from_gg(x, ..., .call = .call),
+    browse = browse
+  )
 }
 
 #' @export

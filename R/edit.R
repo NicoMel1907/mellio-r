@@ -180,6 +180,26 @@ mellio_figure_edit_url <- function(x) {
     }
   }
 
+  # Add editable figure recipe when available. The static image remains in the
+  # URL as a fallback for older Mellio builds or unsupported recipe rendering.
+  if (!is.null(x$recipe_payload)) {
+    recipe_json <- jsonlite::toJSON(x$recipe_payload, auto_unbox = TRUE,
+                                    null = "null", na = "null", digits = NA)
+    recipe_encoded <- ms_base64url_encode(as.character(recipe_json))
+    if (nchar(recipe_encoded) < ms_url_size_limit) {
+      url <- paste0(url, "&figurePayload=",
+                    utils::URLencode(recipe_encoded, reserved = TRUE))
+      if (!is.null(x$recipe_type)) {
+        url <- paste0(url, "&figureType=",
+                      utils::URLencode(x$recipe_type, reserved = TRUE))
+      }
+    } else {
+      cli::cli_inform(c(
+        "i" = "Editable figure data is too large for URL transfer. Sending a static figure instead."
+      ))
+    }
+  }
+
   # Add metadata
   if (!is.null(x$title)) {
     url <- paste0(url, "&figTitle=",

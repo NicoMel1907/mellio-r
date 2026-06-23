@@ -17,6 +17,17 @@ expect_figure_url <- function(url, title = NULL) {
   }
 }
 
+decode_figure_payload <- function(url) {
+  value <- sub(".*[?&#]figurePayload=([^&]+).*", "\\1", url)
+  expect_false(identical(value, url))
+  value <- utils::URLdecode(value)
+  std <- chartr("-_", "+/", value)
+  pad <- (4 - nchar(std) %% 4) %% 4
+  if (pad) std <- paste0(std, paste(rep("=", pad), collapse = ""))
+  jsonlite::fromJSON(rawToChar(jsonlite::base64_dec(std)),
+                     simplifyVector = FALSE)
+}
+
 skip_if_no_webshot_browser <- function() {
   testthat::skip_if_not_installed("webshot2")
 
@@ -46,6 +57,59 @@ test_that("mellio_open sends lattice trellis objects through Figures", {
   url <- mellio_open(p, title = "Lattice plot", browse = FALSE)
 
   expect_figure_url(url, "Lattice plot")
+})
+
+test_that("mellio_open sends simple ggplots with editable raw scatter data", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(
+    mtcars,
+    ggplot2::aes(wt, mpg, colour = factor(cyl))
+  ) +
+    ggplot2::geom_point(size = 2) +
+    ggplot2::labs(
+      x = "Weight (1000 lbs)",
+      y = "Miles per gallon",
+      colour = "Cylinders"
+    ) +
+    ggplot2::theme_minimal()
+
+  url <- mellio_open(
+    p,
+    title = "Fuel efficiency by weight",
+    number = 1,
+    note = "Cylinders shown by color.",
+    browse = FALSE
+  )
+
+  expect_figure_url(url, "Fuel efficiency by weight")
+  expect_match(url, "figurePayload=", fixed = TRUE)
+  expect_match(url, "figureType=raw_scatter", fixed = TRUE)
+
+  payload <- decode_figure_payload(url)
+  scatter <- payload$figure_data$raw_scatter
+  expect_equal(payload$metadata$source, "r_ggplot")
+  expect_equal(payload$metadata$available_figures[[1]]$type, "raw_scatter")
+  expect_equal(scatter$x$label, "Weight (1000 lbs)")
+  expect_equal(scatter$y$label, "Miles per gallon")
+  expect_equal(scatter$group$label, "Cylinders")
+  expect_equal(vapply(scatter$group$levels, `[[`, character(1), "value"),
+               c("4", "6", "8"))
+  expect_length(scatter$points, nrow(mtcars))
+})
+
+test_that("mellio_open keeps complex ggplots as static figure fallbacks", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(mpg)) +
+    ggplot2::geom_histogram(binwidth = 5)
+
+  url <- mellio_open(p, title = "MPG histogram", browse = FALSE)
+
+  expect_figure_url(url, "MPG histogram")
+  expect_no_match(url, "figurePayload=", fixed = TRUE)
 })
 
 test_that("mellio_open sends htmlwidgets through Figures", {
