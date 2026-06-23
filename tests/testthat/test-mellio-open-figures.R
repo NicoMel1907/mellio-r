@@ -101,6 +101,93 @@ test_that("mellio_open sends simple ggplots with editable raw scatter data", {
   expect_length(scatter$points, nrow(mtcars))
 })
 
+test_that("mellio_open sends ggplot count bars as editable bar charts", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(factor(cyl))) +
+    ggplot2::geom_bar() +
+    ggplot2::labs(x = "Cylinders")
+
+  url <- mellio_open(p, title = "Cars by cylinder count", browse = FALSE)
+
+  expect_figure_url(url, "Cars by cylinder count")
+  expect_match(url, "figureType=bar_chart", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  bars <- payload$figure_data$bar_chart
+  expect_equal(payload$metadata$available_figures[[1]]$type, "bar_chart")
+  expect_equal(bars$variable, "Cylinders")
+  expect_equal(bars$y_label, "Count")
+  expect_equal(vapply(bars$categories, `[[`, character(1), "label"),
+               c("4", "6", "8"))
+  expect_equal(vapply(bars$categories, `[[`, integer(1), "count"),
+               as.integer(c(11, 7, 14)))
+})
+
+test_that("mellio_open preserves ggplot coord_flip bars as horizontal", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(factor(cyl))) +
+    ggplot2::geom_bar() +
+    ggplot2::coord_flip() +
+    ggplot2::labs(x = "Cylinders")
+
+  url <- mellio_open(p, title = "Horizontal cylinder counts", browse = FALSE)
+
+  expect_figure_url(url, "Horizontal cylinder counts")
+  payload <- decode_figure_payload(url)
+  expect_equal(payload$metadata$available_figures[[1]]$type, "bar_chart")
+  expect_equal(payload$metadata$figure_settings$barOrientation, "horizontal")
+})
+
+test_that("mellio_open sends simple ggplot value bars as editable bar charts", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  df <- data.frame(group = c("Control", "Treatment"), mean = c(3.2, 4.7))
+  p <- ggplot2::ggplot(df, ggplot2::aes(group, mean)) +
+    ggplot2::geom_col() +
+    ggplot2::labs(x = "Group", y = "Mean score")
+
+  url <- mellio_open(p, title = "Mean score by group", browse = FALSE)
+
+  expect_figure_url(url, "Mean score by group")
+  expect_match(url, "figureType=bar_chart", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  bars <- payload$figure_data$bar_chart
+  expect_equal(bars$y_label, "Mean score")
+  expect_equal(vapply(bars$categories, `[[`, character(1), "label"),
+               c("Control", "Treatment"))
+  expect_equal(vapply(bars$categories, `[[`, numeric(1), "count"),
+               c(3.2, 4.7))
+})
+
+test_that("mellio_open sends ggplot lm smooths as editable regression scatterplots", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(wt, mpg)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_smooth(method = "lm") +
+    ggplot2::labs(x = "Weight (1000 lbs)", y = "Miles per gallon")
+
+  url <- mellio_open(p, title = "Fuel efficiency regression", browse = FALSE)
+
+  expect_figure_url(url, "Fuel efficiency regression")
+  expect_match(url, "figureType=scatter_plot", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  scatter <- payload$figure_data$scatter_plot
+  expect_equal(payload$metadata$available_figures[[1]]$type, "scatter_plot")
+  expect_equal(scatter$x_label, "Weight (1000 lbs)")
+  expect_equal(scatter$y_label, "Miles per gallon")
+  expect_length(scatter$observations, nrow(mtcars))
+  expect_true(length(scatter$fit$line) >= 2)
+  expect_true(all(vapply(scatter$fit$line, function(point) {
+    !is.null(point$lower) && !is.null(point$upper)
+  }, logical(1))))
+})
+
 test_that("mellio_open keeps complex ggplots as static figure fallbacks", {
   testthat::skip_if_not_installed("ggplot2")
   withr::local_options(list(mellio.editor_url = "https://example.com"))

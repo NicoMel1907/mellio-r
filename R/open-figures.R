@@ -43,7 +43,7 @@ mellio_open_figure_from_gg <- function(x, style = "apa7", title = NULL,
                                        .call = NULL) {
   rlang::check_installed("ggplot2", reason = "to send ggplot objects to Mellio")
 
-  recipe_payload <- mellio_ggplot_raw_scatter_payload(
+  recipe <- mellio_ggplot_recipe(
     x,
     title = title,
     .call = .call
@@ -62,9 +62,26 @@ mellio_open_figure_from_gg <- function(x, style = "apa7", title = NULL,
     dpi = dpi,
     width_px = width * dpi,
     height_px = height * dpi,
-    recipe_payload = recipe_payload,
-    recipe_type = if (is.null(recipe_payload)) NULL else "raw_scatter"
+    recipe_payload = recipe$payload,
+    recipe_type = recipe$type
   )
+}
+
+mellio_ggplot_recipe <- function(plot, title = NULL, .call = NULL) {
+  recipes <- list(
+    scatter_plot = mellio_ggplot_lm_scatter_payload,
+    bar_chart = mellio_ggplot_bar_chart_payload,
+    raw_scatter = mellio_ggplot_raw_scatter_payload
+  )
+
+  for (type in names(recipes)) {
+    payload <- recipes[[type]](plot, title = title, .call = .call)
+    if (!is.null(payload)) {
+      return(list(type = type, payload = payload))
+    }
+  }
+
+  list(type = NULL, payload = NULL)
 }
 
 mellio_ggplot_raw_scatter_payload <- function(plot, title = NULL,
@@ -99,7 +116,10 @@ mellio_ggplot_raw_scatter_payload <- function(plot, title = NULL,
   y_vals <- as.numeric(y_raw)
   if (length(x_vals) != nrow(data) || length(y_vals) != nrow(data)) return(NULL)
 
-  built <- tryCatch(ggplot2::ggplot_build(plot), error = function(e) NULL)
+  built <- tryCatch(
+    suppressMessages(ggplot2::ggplot_build(plot)),
+    error = function(e) NULL
+  )
   if (is.null(built) || length(built$data) != 1L) return(NULL)
   panel <- built$data[[1]]$PANEL
   if (!is.null(panel) && length(unique(as.character(panel))) > 1L) return(NULL)
@@ -170,6 +190,243 @@ mellio_ggplot_raw_scatter_payload <- function(plot, title = NULL,
       available_figures = list(list(
         type = "raw_scatter",
         label = "Scatterplot",
+        default = TRUE
+      ))
+    ),
+    packages = ms_packages_basic("ggplot2")
+  )
+}
+
+mellio_ggplot_bar_chart_payload <- function(plot, title = NULL, .call = NULL,
+                                            max_categories = 60L) {
+  if (!requireNamespace("ggplot2", quietly = TRUE) ||
+      !requireNamespace("rlang", quietly = TRUE)) {
+    return(NULL)
+  }
+
+  layers <- plot$layers %||% list()
+  if (length(layers) != 1L) return(NULL)
+  layer <- layers[[1]]
+  if (!inherits(layer$geom, "GeomBar") &&
+      !inherits(layer$geom, "GeomCol")) {
+    return(NULL)
+  }
+
+  data <- mellio_ggplot_layer_data(plot, layer)
+  if (!is.data.frame(data) || nrow(data) < 1L) return(NULL)
+  mapping <- mellio_ggplot_layer_mapping(plot, layer)
+  if (is.null(mapping$x)) return(NULL)
+  if (!is.null(mapping$fill) || !is.null(mapping$colour) ||
+      !is.null(mapping$color) || !is.null(mapping$group)) {
+    return(NULL)
+  }
+
+  built <- tryCatch(
+    suppressMessages(ggplot2::ggplot_build(plot)),
+    error = function(e) NULL
+  )
+  if (is.null(built) || length(built$data) != 1L) return(NULL)
+  panel <- built$data[[1]]$PANEL
+  if (!is.null(panel) && length(unique(as.character(panel))) > 1L) return(NULL)
+
+  x_raw <- mellio_ggplot_eval_mapping(mapping$x, data)
+  if (is.null(x_raw) || length(x_raw) != nrow(data)) return(NULL)
+  x_text <- as.character(x_raw)
+  valid_x <- !is.na(x_text) & nzchar(x_text)
+  if (!any(valid_x)) return(NULL)
+
+  stat_count <- inherits(layer$stat, "StatCount")
+  stat_identity <- inherits(layer$stat, "StatIdentity")
+  if (!stat_count && !stat_identity) return(NULL)
+
+  x_var <- mellio_ggplot_mapping_label(mapping$x)
+  x_label <- mellio_ggplot_plot_label(plot, "x", x_var)
+  y_label <- mellio_ggplot_plot_label(
+    plot,
+    "y",
+    if (stat_count) "Count" else mellio_ggplot_mapping_label(mapping$y)
+  )
+
+  if (stat_count) {
+    categories <- mellio_ggplot_count_categories(x_raw[valid_x])
+    caption <- "Counts per category."
+  } else {
+    if (is.null(mapping$y)) return(NULL)
+    y_raw <- mellio_ggplot_eval_mapping(mapping$y, data)
+    if (!is.numeric(y_raw) || length(y_raw) != nrow(data)) return(NULL)
+    y_vals <- as.numeric(y_raw)
+    valid <- valid_x & is.finite(y_vals)
+    if (!any(valid) || any(y_vals[valid] < 0)) return(NULL)
+    categories <- mellio_ggplot_value_categories(x_raw[valid], y_vals[valid])
+    caption <- "Values by category."
+  }
+
+  if (!length(categories) || length(categories) > max_categories) return(NULL)
+
+  payload_title <- title %||%
+    mellio_ggplot_label_value(plot, "title") %||%
+    if (stat_count) paste0("Frequencies of ", x_label) else paste0(y_label, " by ", x_label)
+
+  metadata <- list(
+    source = "r_ggplot",
+    available_figures = list(list(
+      type = "bar_chart",
+      label = "Bar chart",
+      default = TRUE
+    ))
+  )
+  if (inherits(plot$coordinates, "CoordFlip")) {
+    metadata$figure_settings <- list(barOrientation = "horizontal")
+  }
+
+  list(
+    schema_version = "0.1",
+    result_id = paste0("r_ggplot_", format(Sys.time(), "%Y%m%d%H%M%OS6",
+                                           tz = "UTC")),
+    card_kind = "table",
+    type = if (stat_count) "r_ggplot_bar_count" else "r_ggplot_bar_value",
+    type_label = if (stat_count) "ggplot count bar chart" else "ggplot bar chart",
+    name = payload_title,
+    call = .call %||% "ggplot object",
+    created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    fields = list(table_type = "bar_chart", x = x_var, y = y_label),
+    figure_data = list(
+      bar_chart = list(
+        source = "r_ggplot",
+        variable = x_label,
+        y_label = y_label,
+        title = payload_title,
+        caption = caption,
+        categories = categories
+      )
+    ),
+    metadata = metadata,
+    packages = ms_packages_basic("ggplot2")
+  )
+}
+
+mellio_ggplot_lm_scatter_payload <- function(plot, title = NULL, .call = NULL,
+                                             max_points = 1000L) {
+  if (!requireNamespace("ggplot2", quietly = TRUE) ||
+      !requireNamespace("rlang", quietly = TRUE)) {
+    return(NULL)
+  }
+
+  layers <- plot$layers %||% list()
+  if (length(layers) != 2L) return(NULL)
+  point_idx <- which(vapply(layers, function(layer) {
+    inherits(layer$geom, "GeomPoint") && inherits(layer$stat, "StatIdentity")
+  }, logical(1)))
+  smooth_idx <- which(vapply(layers, function(layer) {
+    inherits(layer$geom, "GeomSmooth") && inherits(layer$stat, "StatSmooth")
+  }, logical(1)))
+  if (length(point_idx) != 1L || length(smooth_idx) != 1L) return(NULL)
+
+  smooth_layer <- layers[[smooth_idx]]
+  method <- smooth_layer$stat_params$method
+  method_is_lm <- identical(method, "lm") ||
+    (is.function(method) && identical(method, stats::lm))
+  if (!isTRUE(method_is_lm)) return(NULL)
+
+  point_layer <- layers[[point_idx]]
+  point_data <- mellio_ggplot_layer_data(plot, point_layer)
+  if (!is.data.frame(point_data) || nrow(point_data) < 3L) return(NULL)
+  point_mapping <- mellio_ggplot_layer_mapping(plot, point_layer)
+  smooth_mapping <- mellio_ggplot_layer_mapping(plot, smooth_layer)
+  if (is.null(point_mapping$x) || is.null(point_mapping$y)) return(NULL)
+  if (!is.null(point_mapping$colour) || !is.null(point_mapping$color) ||
+      !is.null(point_mapping$fill) || !is.null(point_mapping$group) ||
+      !is.null(smooth_mapping$colour) || !is.null(smooth_mapping$color) ||
+      !is.null(smooth_mapping$fill) || !is.null(smooth_mapping$group)) {
+    return(NULL)
+  }
+
+  x_raw <- mellio_ggplot_eval_mapping(point_mapping$x, point_data)
+  y_raw <- mellio_ggplot_eval_mapping(point_mapping$y, point_data)
+  if (!is.numeric(x_raw) || !is.numeric(y_raw)) return(NULL)
+  x_vals <- as.numeric(x_raw)
+  y_vals <- as.numeric(y_raw)
+  if (length(x_vals) != nrow(point_data) || length(y_vals) != nrow(point_data)) return(NULL)
+  valid <- is.finite(x_vals) & is.finite(y_vals)
+  if (sum(valid) < 3L || sum(valid) > max_points) return(NULL)
+
+  built <- tryCatch(
+    suppressMessages(ggplot2::ggplot_build(plot)),
+    error = function(e) NULL
+  )
+  if (is.null(built) || length(built$data) != 2L) return(NULL)
+  smooth_built <- built$data[[smooth_idx]]
+  point_built <- built$data[[point_idx]]
+  if (length(unique(as.character(point_built$PANEL))) > 1L ||
+      length(unique(as.character(smooth_built$PANEL))) > 1L ||
+      length(unique(as.character(smooth_built$group))) > 1L) {
+    return(NULL)
+  }
+
+  line <- mellio_ggplot_smooth_line(smooth_built)
+  if (length(line) < 2L) return(NULL)
+
+  idx <- which(valid)
+  observations <- lapply(seq_along(idx), function(i) {
+    row <- idx[[i]]
+    list(
+      id = as.integer(i),
+      row = as.integer(row),
+      x = x_vals[[row]],
+      y = y_vals[[row]]
+    )
+  })
+
+  x_var <- mellio_ggplot_mapping_label(point_mapping$x)
+  y_var <- mellio_ggplot_mapping_label(point_mapping$y)
+  x_label <- mellio_ggplot_plot_label(plot, "x", x_var)
+  y_label <- mellio_ggplot_plot_label(plot, "y", y_var)
+  conf_level <- suppressWarnings(as.numeric(smooth_layer$stat_params$level))
+  if (length(conf_level) != 1L || !isTRUE(is.finite(conf_level)) ||
+      is.na(conf_level) || conf_level <= 0 || conf_level >= 1) {
+    conf_level <- 0.95
+  }
+
+  payload_title <- title %||%
+    mellio_ggplot_label_value(plot, "title") %||%
+    paste0("Scatter plot of ", y_label, " and ", x_label)
+
+  list(
+    schema_version = "0.1",
+    result_id = paste0("r_ggplot_", format(Sys.time(), "%Y%m%d%H%M%OS6",
+                                           tz = "UTC")),
+    card_kind = "table",
+    type = "r_ggplot_lm_scatter",
+    type_label = "ggplot regression scatterplot",
+    name = payload_title,
+    call = .call %||% "ggplot object",
+    created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    fields = list(table_type = "scatter_plot", x = x_var, y = y_var),
+    figure_data = list(
+      scatter_plot = list(
+        source = "r_ggplot",
+        method = "ols",
+        x_label = x_label,
+        y_label = y_label,
+        observations = observations,
+        fit = list(
+          kind = "ols",
+          conf_level = conf_level,
+          line = line
+        ),
+        n = length(observations),
+        point_display = list(
+          total_n = length(observations),
+          included_n = length(observations),
+          truncated = FALSE
+        )
+      )
+    ),
+    metadata = list(
+      source = "r_ggplot",
+      available_figures = list(list(
+        type = "scatter_plot",
+        label = "Regression scatterplot",
         default = TRUE
       ))
     ),
@@ -248,6 +505,61 @@ mellio_ggplot_group_values <- function(plot, mapping, data, valid,
       list(value = value, label = value)
     })
   )
+}
+
+mellio_ggplot_category_order <- function(values) {
+  text <- as.character(values)
+  text <- text[!is.na(text) & nzchar(text)]
+  if (is.factor(values)) {
+    levels_present <- intersect(levels(values), unique(text))
+    c(levels_present, setdiff(unique(text), levels_present))
+  } else {
+    unique(text)
+  }
+}
+
+mellio_ggplot_count_categories <- function(values) {
+  order <- mellio_ggplot_category_order(values)
+  text <- as.character(values)
+  lapply(order, function(value) {
+    list(
+      value = value,
+      label = value,
+      count = as.integer(sum(text == value, na.rm = TRUE))
+    )
+  })
+}
+
+mellio_ggplot_value_categories <- function(values, y) {
+  order <- mellio_ggplot_category_order(values)
+  text <- as.character(values)
+  lapply(order, function(value) {
+    list(
+      value = value,
+      label = value,
+      count = sum(y[text == value], na.rm = TRUE)
+    )
+  })
+}
+
+mellio_ggplot_smooth_line <- function(data) {
+  if (!is.data.frame(data) || !all(c("x", "y") %in% names(data))) return(list())
+  valid <- is.finite(data$x) & is.finite(data$y)
+  has_band <- all(c("ymin", "ymax") %in% names(data))
+  if (has_band) {
+    valid <- valid & is.finite(data$ymin) & is.finite(data$ymax)
+  }
+  if (sum(valid) < 2L) return(list())
+  data <- data[valid, , drop = FALSE]
+  data <- data[order(data$x), , drop = FALSE]
+  lapply(seq_len(nrow(data)), function(i) {
+    point <- list(x = data$x[[i]], y = data$y[[i]])
+    if (has_band) {
+      point$lower <- data$ymin[[i]]
+      point$upper <- data$ymax[[i]]
+    }
+    point
+  })
 }
 
 mellio_ggplot_mapping_label <- function(expr) {
