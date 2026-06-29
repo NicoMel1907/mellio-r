@@ -15,18 +15,22 @@ documented in `NEWS.md`.
 * local macOS (aarch64-apple-darwin20), R 4.4.0
   (`R CMD check --no-manual --ignore-vignettes --no-build-vignettes`,
   with `_R_CHECK_FORCE_SUGGESTS_=false`)
+* win-builder, R-release 4.6.1 (2026-06-24 ucrt)
+* win-builder, R-devel (2026-06-26 r90195 ucrt)
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
-* checking package dependencies ... NOTE
-  Packages suggested but not available for checking:
-    'webshot2', 'ggExtra', 'plotly', 'randomForest', 'brms', 'rstanarm'
+* checking CRAN incoming feasibility ... NOTE
+  Maintainer: 'Melih Sahin <nicomelpro@pm.me>'
+  New submission
+  Possibly misspelled words in DESCRIPTION:
+    APA (11:55)
 
-This note is local-only. The packages are optional integrations guarded by
-`requireNamespace()`, and the check was run with `_R_CHECK_FORCE_SUGGESTS_=false`
-because these optional packages are not installed in this local environment.
+This note is expected for a first CRAN submission. `APA` is a standard acronym,
+and the package/software/API names in `DESCRIPTION` have been wrapped in single
+quotes as requested in the previous review.
 
 ## Notes for the reviewer
 
