@@ -7,6 +7,9 @@ This is a resubmission. In this version I have:
   temporary-file examples, as appropriate; and
 * bumped the package version from 1.0.0 to 1.0.1 for this resubmission.
 
+The 1.0.1 release also includes small `ggplot2` figure handoff improvements
+documented in `NEWS.md`.
+
 ## Test environments
 
 * local macOS (aarch64-apple-darwin20), R 4.4.0

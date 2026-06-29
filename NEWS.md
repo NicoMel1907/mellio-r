@@ -1,10 +1,14 @@
 # mellio 1.0.1
 
-Documentation-only CRAN resubmission of the initial public release.
+CRAN resubmission and figure handoff improvements.
 
+* Added editable figure handoff for simple `ggplot2` point-range and
+  point-plus-errorbar plots.
+* Added editable figure handoff for simple and grouped `ggplot2` box plots.
+* Increased the editable raw scatter handoff limit for `ggplot2` plots from
+  1,000 to 1,500 points.
 * Updated package/software/API name formatting in `DESCRIPTION` for CRAN.
 * Revised examples in R help pages to follow CRAN guidance.
-* No user-facing behavior changes.
 
 # mellio 1.0.0
 
