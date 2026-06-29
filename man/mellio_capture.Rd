@@ -18,9 +18,15 @@ Convenience wrapper for base R plots. Call after producing a base plot
 with \code{plot()}, \code{hist()}, \code{barplot()}, or another graphics function.
 }
 \examples{
-\dontrun{
-plot(mtcars$wt, mtcars$mpg)
-mellio_capture(title = "Fuel efficiency by weight", number = 1)
+\donttest{
+if (interactive()) {
+  plot(mtcars$wt, mtcars$mpg)
+  mellio_capture(
+    title = "Fuel efficiency by weight",
+    number = 1,
+    browse = FALSE
+  )
+}
 }
 }
 \seealso{

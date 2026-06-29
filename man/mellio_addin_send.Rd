@@ -21,10 +21,14 @@ Registered via \code{inst/rstudio/addins.dcf}. Appears in RStudio's
 \strong{Addins} menu once the package is loaded.
 }
 \examples{
-\dontrun{
-# Highlight   t.test(extra ~ group, data = sleep)   in RStudio
-# → Addins menu → Send to Mellio
-mellio_addin_send()
+\donttest{
+if (interactive() &&
+    requireNamespace("rstudioapi", quietly = TRUE) &&
+    rstudioapi::isAvailable()) {
+  # Highlight   t.test(extra ~ group, data = sleep)   in RStudio
+  # Addins menu -> Send to Mellio
+  mellio_addin_send()
+}
 }
 }
 \seealso{

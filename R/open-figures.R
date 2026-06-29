@@ -70,6 +70,8 @@ mellio_open_figure_from_gg <- function(x, style = "apa7", title = NULL,
 mellio_ggplot_recipe <- function(plot, title = NULL, .call = NULL) {
   recipes <- list(
     scatter_plot = mellio_ggplot_lm_scatter_payload,
+    adjusted_means = mellio_ggplot_summary_errorbar_payload,
+    box_plot = mellio_ggplot_boxplot_payload,
     bar_chart = mellio_ggplot_bar_chart_payload,
     raw_scatter = mellio_ggplot_raw_scatter_payload
   )
@@ -77,7 +79,12 @@ mellio_ggplot_recipe <- function(plot, title = NULL, .call = NULL) {
   for (type in names(recipes)) {
     payload <- recipes[[type]](plot, title = title, .call = .call)
     if (!is.null(payload)) {
-      return(list(type = type, payload = payload))
+      figure_type <- type
+      available <- payload$metadata$available_figures
+      if (length(available) && !is.null(available[[1]]$type)) {
+        figure_type <- available[[1]]$type
+      }
+      return(list(type = figure_type, payload = payload))
     }
   }
 
@@ -86,7 +93,7 @@ mellio_ggplot_recipe <- function(plot, title = NULL, .call = NULL) {
 
 mellio_ggplot_raw_scatter_payload <- function(plot, title = NULL,
                                               .call = NULL,
-                                              max_points = 1000L,
+                                              max_points = 1500L,
                                               max_groups = 20L) {
   if (!requireNamespace("ggplot2", quietly = TRUE) ||
       !requireNamespace("rlang", quietly = TRUE)) {
@@ -305,8 +312,358 @@ mellio_ggplot_bar_chart_payload <- function(plot, title = NULL, .call = NULL,
   )
 }
 
+mellio_ggplot_summary_errorbar_payload <- function(plot, title = NULL,
+                                                   .call = NULL,
+                                                   max_groups = 60L) {
+  if (!requireNamespace("ggplot2", quietly = TRUE) ||
+      !requireNamespace("rlang", quietly = TRUE)) {
+    return(NULL)
+  }
+
+  layers <- plot$layers %||% list()
+  if (inherits(plot$coordinates, "CoordFlip")) return(NULL)
+
+  point_layer <- NULL
+  range_layer <- NULL
+  if (length(layers) == 1L &&
+      inherits(layers[[1]]$geom, "GeomPointrange") &&
+      inherits(layers[[1]]$stat, "StatIdentity")) {
+    point_layer <- layers[[1]]
+    range_layer <- layers[[1]]
+  } else if (length(layers) == 2L) {
+    point_idx <- which(vapply(layers, function(layer) {
+      inherits(layer$geom, "GeomPoint") && inherits(layer$stat, "StatIdentity")
+    }, logical(1)))
+    range_idx <- which(vapply(layers, function(layer) {
+      inherits(layer$geom, "GeomErrorbar") && inherits(layer$stat, "StatIdentity")
+    }, logical(1)))
+    if (length(point_idx) != 1L || length(range_idx) != 1L) return(NULL)
+    point_layer <- layers[[point_idx]]
+    range_layer <- layers[[range_idx]]
+  } else {
+    return(NULL)
+  }
+
+  point_data <- mellio_ggplot_layer_data(plot, point_layer)
+  range_data <- mellio_ggplot_layer_data(plot, range_layer)
+  if (!is.data.frame(point_data) || !is.data.frame(range_data) ||
+      nrow(point_data) < 2L || nrow(point_data) != nrow(range_data)) {
+    return(NULL)
+  }
+
+  point_mapping <- mellio_ggplot_layer_mapping(plot, point_layer)
+  range_mapping <- mellio_ggplot_layer_mapping(plot, range_layer)
+  if (is.null(point_mapping$x) || is.null(point_mapping$y) ||
+      is.null(range_mapping$ymin) || is.null(range_mapping$ymax)) {
+    return(NULL)
+  }
+
+  x_raw <- mellio_ggplot_eval_mapping(point_mapping$x, point_data)
+  y_raw <- mellio_ggplot_eval_mapping(point_mapping$y, point_data)
+  ymin_raw <- mellio_ggplot_eval_mapping(range_mapping$ymin, range_data)
+  ymax_raw <- mellio_ggplot_eval_mapping(range_mapping$ymax, range_data)
+  if (is.null(x_raw) || length(x_raw) != nrow(point_data) ||
+      !is.numeric(y_raw) || length(y_raw) != nrow(point_data) ||
+      !is.numeric(ymin_raw) || length(ymin_raw) != nrow(range_data) ||
+      !is.numeric(ymax_raw) || length(ymax_raw) != nrow(range_data)) {
+    return(NULL)
+  }
+
+  built <- tryCatch(
+    suppressMessages(ggplot2::ggplot_build(plot)),
+    error = function(e) NULL
+  )
+  if (is.null(built) || length(built$data) != length(layers)) return(NULL)
+  panels <- unlist(lapply(built$data, function(layer_data) {
+    as.character(layer_data$PANEL %||% 1)
+  }), use.names = FALSE)
+  if (length(unique(panels)) > 1L) return(NULL)
+
+  valid <- !is.na(as.character(x_raw)) &
+    nzchar(as.character(x_raw)) &
+    is.finite(as.numeric(y_raw)) &
+    is.finite(as.numeric(ymin_raw)) &
+    is.finite(as.numeric(ymax_raw))
+  if (sum(valid) < 2L) return(NULL)
+
+  x_var <- mellio_ggplot_mapping_label(point_mapping$x)
+  y_var <- mellio_ggplot_mapping_label(point_mapping$y)
+  if (!mellio_ggplot_group_aes_safe(point_mapping, "fill", point_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(point_mapping, "colour", point_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(point_mapping, "color", point_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(point_mapping, "group", point_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(range_mapping, "fill", range_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(range_mapping, "colour", range_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(range_mapping, "color", range_data, valid, x_var) ||
+      !mellio_ggplot_group_aes_safe(range_mapping, "group", range_data, valid, x_var)) {
+    return(NULL)
+  }
+
+  x_text <- as.character(x_raw)
+  levels <- mellio_ggplot_category_order(x_raw[valid])
+  if (length(levels) < 2L || length(levels) > max_groups) return(NULL)
+  if (anyDuplicated(x_text[valid])) return(NULL)
+
+  y_vals <- as.numeric(y_raw)
+  ymin_vals <- as.numeric(ymin_raw)
+  ymax_vals <- as.numeric(ymax_raw)
+  x_label <- mellio_ggplot_plot_label(plot, "x", x_var)
+  y_label <- mellio_ggplot_plot_label(plot, "y", y_var)
+  group_rows <- lapply(levels, function(level) {
+    rows <- which(valid & x_text == level)
+    if (length(rows) != 1L) return(NULL)
+    row <- rows[[1]]
+    lo <- min(ymin_vals[[row]], ymax_vals[[row]])
+    hi <- max(ymin_vals[[row]], ymax_vals[[row]])
+    list(
+      level = level,
+      label = level,
+      mean = y_vals[[row]],
+      ci_lower = lo,
+      ci_upper = hi,
+      x = match(level, levels)
+    )
+  })
+  group_rows <- Filter(Negate(is.null), group_rows)
+  if (length(group_rows) != length(levels)) return(NULL)
+
+  payload_title <- title %||%
+    mellio_ggplot_label_value(plot, "title") %||%
+    paste0(y_label, " by ", x_label)
+
+  list(
+    schema_version = "0.1",
+    result_id = paste0("r_ggplot_", format(Sys.time(), "%Y%m%d%H%M%OS6",
+                                           tz = "UTC")),
+    card_kind = "table",
+    type = "r_ggplot_summary_errorbar",
+    type_label = "ggplot summary error-bar plot",
+    name = payload_title,
+    call = .call %||% "ggplot object",
+    created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    fields = list(table_type = "summary_errorbar", factor = x_var, y = y_var),
+    figure_data = list(
+      adjusted_means = list(
+        mean_kind = "observed",
+        source = "r_ggplot_summary",
+        factor = list(
+          variable = x_var,
+          term = x_var,
+          label = x_label,
+          levels = lapply(levels, function(level) {
+            list(value = level, label = level)
+          })
+        ),
+        groups = group_rows,
+        y_label = y_label,
+        outcome = y_label,
+        ci_level = 0.95,
+        ci_method = "source_bounds"
+      )
+    ),
+    metadata = list(
+      source = "r_ggplot",
+      available_figures = list(list(
+        type = "adjusted_means",
+        label = "Error-bar plot",
+        default = TRUE
+      ))
+    ),
+    packages = ms_packages_basic("ggplot2")
+  )
+}
+
+mellio_ggplot_boxplot_payload <- function(plot, title = NULL, .call = NULL,
+                                          max_points = 1500L,
+                                          max_groups = 40L) {
+  if (!requireNamespace("ggplot2", quietly = TRUE) ||
+      !requireNamespace("rlang", quietly = TRUE)) {
+    return(NULL)
+  }
+
+  layers <- plot$layers %||% list()
+  if (length(layers) != 1L) return(NULL)
+  if (inherits(plot$coordinates, "CoordFlip")) return(NULL)
+
+  layer <- layers[[1]]
+  if (!inherits(layer$geom, "GeomBoxplot") ||
+      !inherits(layer$stat, "StatBoxplot")) {
+    return(NULL)
+  }
+
+  data <- mellio_ggplot_layer_data(plot, layer)
+  if (!is.data.frame(data) || nrow(data) < 2L) return(NULL)
+
+  mapping <- mellio_ggplot_layer_mapping(plot, layer)
+  if (is.null(mapping$y)) return(NULL)
+
+  y_raw <- mellio_ggplot_eval_mapping(mapping$y, data)
+  if (!is.numeric(y_raw) || length(y_raw) != nrow(data)) return(NULL)
+  y_vals <- as.numeric(y_raw)
+
+  built <- tryCatch(
+    suppressMessages(ggplot2::ggplot_build(plot)),
+    error = function(e) NULL
+  )
+  if (is.null(built) || length(built$data) != 1L) return(NULL)
+  panel <- built$data[[1]]$PANEL
+  if (!is.null(panel) && length(unique(as.character(panel))) > 1L) return(NULL)
+
+  valid_y <- is.finite(y_vals)
+  if (sum(valid_y) < 2L || sum(valid_y) > max_points) return(NULL)
+
+  x_var <- NULL
+  x_label <- NULL
+  x_raw <- NULL
+  x_text <- NULL
+  if (!is.null(mapping$x)) {
+    x_raw <- mellio_ggplot_eval_mapping(mapping$x, data)
+    if (is.null(x_raw) || length(x_raw) != nrow(data)) return(NULL)
+    x_text <- as.character(x_raw)
+    x_text[is.na(x_text) | !nzchar(x_text)] <- NA_character_
+    x_var <- mellio_ggplot_mapping_label(mapping$x)
+    x_label <- mellio_ggplot_plot_label(plot, "x", x_var)
+  }
+
+  if (!mellio_ggplot_group_aes_safe(mapping, "fill", data, valid_y, x_var) ||
+      !mellio_ggplot_group_aes_safe(mapping, "colour", data, valid_y, x_var) ||
+      !mellio_ggplot_group_aes_safe(mapping, "color", data, valid_y, x_var) ||
+      !mellio_ggplot_group_aes_safe(mapping, "group", data, valid_y, x_var)) {
+    return(NULL)
+  }
+
+  y_var <- mellio_ggplot_mapping_label(mapping$y)
+  y_label <- mellio_ggplot_plot_label(plot, "y", y_var)
+  payload_title <- title %||%
+    mellio_ggplot_label_value(plot, "title") %||%
+    if (!is.null(x_label)) {
+      paste0("Distribution of ", y_label, " by ", x_label)
+    } else {
+      paste0("Distribution of ", y_label)
+    }
+
+  if (is.null(x_text)) {
+    values <- y_vals[valid_y]
+    box <- mellio_ggplot_box_stats(values)
+    if (is.null(box)) return(NULL)
+    return(list(
+      schema_version = "0.1",
+      result_id = paste0("r_ggplot_", format(Sys.time(), "%Y%m%d%H%M%OS6",
+                                             tz = "UTC")),
+      card_kind = "table",
+      type = "r_ggplot_boxplot",
+      type_label = "ggplot box plot",
+      name = payload_title,
+      call = .call %||% "ggplot object",
+      created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+      fields = list(table_type = "distribution", y = y_var),
+      figure_data = list(
+        distribution = list(
+          source = "r_ggplot_boxplot",
+          variable = y_label,
+          n = length(values),
+          values = values,
+          box = box
+        )
+      ),
+      metadata = list(
+        source = "r_ggplot",
+        available_figures = list(list(
+          type = "box_plot",
+          label = "Box plot",
+          default = TRUE
+        ))
+      ),
+      packages = ms_packages_basic("ggplot2")
+    ))
+  }
+
+  valid <- valid_y & !is.na(x_text)
+  if (sum(valid) < 2L) return(NULL)
+  levels <- mellio_ggplot_category_order(x_raw[valid])
+  if (length(levels) < 2L || length(levels) > max_groups) return(NULL)
+
+  groups <- lapply(levels, function(level) {
+    rows <- which(valid & x_text == level)
+    values <- y_vals[rows]
+    box <- mellio_ggplot_box_stats(values)
+    if (is.null(box)) return(NULL)
+    list(
+      level = level,
+      label = level,
+      n = length(values),
+      median = box$median,
+      q1 = box$q1,
+      q3 = box$q3,
+      iqr = box$iqr,
+      min = box$min,
+      max = box$max,
+      whisker_lo = box$whisker_lo,
+      whisker_hi = box$whisker_hi,
+      mean = mean(values)
+    )
+  })
+  groups <- Filter(Negate(is.null), groups)
+  if (length(groups) < 2L) return(NULL)
+
+  idx <- which(valid)
+  observations <- lapply(seq_along(idx), function(i) {
+    row <- idx[[i]]
+    list(
+      id = as.integer(i),
+      row = as.integer(row),
+      group = x_text[[row]],
+      value = y_vals[[row]]
+    )
+  })
+
+  list(
+    schema_version = "0.1",
+    result_id = paste0("r_ggplot_", format(Sys.time(), "%Y%m%d%H%M%OS6",
+                                           tz = "UTC")),
+    card_kind = "table",
+    type = "r_ggplot_grouped_boxplot",
+    type_label = "ggplot grouped box plot",
+    name = payload_title,
+    call = .call %||% "ggplot object",
+    created_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC"),
+    fields = list(table_type = "grouped_distribution", factor = x_var, y = y_var),
+    figure_data = list(
+      nonparametric_group_plot = list(
+        source = "r_ggplot_boxplot",
+        factor = list(
+          variable = x_var,
+          term = x_var,
+          label = x_label,
+          levels = lapply(levels, function(level) {
+            list(value = level, label = level)
+          })
+        ),
+        groups = groups,
+        observations = observations,
+        y_label = y_label,
+        outcome = y_label,
+        point_display = list(
+          total_n = length(observations),
+          included_n = length(observations),
+          truncated = FALSE
+        )
+      )
+    ),
+    metadata = list(
+      source = "r_ggplot",
+      available_figures = list(list(
+        type = "nonparametric_group_plot",
+        label = "Box plot",
+        default = TRUE
+      ))
+    ),
+    packages = ms_packages_basic("ggplot2")
+  )
+}
+
 mellio_ggplot_lm_scatter_payload <- function(plot, title = NULL, .call = NULL,
-                                             max_points = 1000L) {
+                                             max_points = 1500L) {
   if (!requireNamespace("ggplot2", quietly = TRUE) ||
       !requireNamespace("rlang", quietly = TRUE)) {
     return(NULL)
@@ -540,6 +897,48 @@ mellio_ggplot_value_categories <- function(values, y) {
       count = sum(y[text == value], na.rm = TRUE)
     )
   })
+}
+
+mellio_ggplot_box_stats <- function(values) {
+  values <- as.numeric(values)
+  values <- values[is.finite(values)]
+  n <- length(values)
+  if (n < 1L) return(NULL)
+  sorted <- sort(values)
+  q1 <- unname(stats::quantile(sorted, 0.25, names = FALSE, type = 7))
+  median <- unname(stats::quantile(sorted, 0.5, names = FALSE, type = 7))
+  q3 <- unname(stats::quantile(sorted, 0.75, names = FALSE, type = 7))
+  iqr <- q3 - q1
+  lo <- q1 - 1.5 * iqr
+  hi <- q3 + 1.5 * iqr
+  in_range <- sorted[sorted >= lo & sorted <= hi]
+  outliers <- sorted[sorted < lo | sorted > hi]
+  list(
+    min = sorted[[1]],
+    q1 = q1,
+    median = median,
+    q3 = q3,
+    max = sorted[[n]],
+    iqr = iqr,
+    whisker_lo = if (length(in_range)) in_range[[1]] else q1,
+    whisker_hi = if (length(in_range)) in_range[[length(in_range)]] else q3,
+    outliers = outliers
+  )
+}
+
+mellio_ggplot_group_aes_safe <- function(mapping, aes, data, valid,
+                                         target_label = NULL) {
+  expr <- mapping[[aes]]
+  if (is.null(expr)) return(TRUE)
+
+  label <- mellio_ggplot_mapping_label(expr)
+  if (!is.null(target_label) && identical(label, target_label)) return(TRUE)
+
+  value <- mellio_ggplot_eval_mapping(expr, data)
+  if (is.null(value) || length(value) != nrow(data)) return(FALSE)
+  text <- as.character(value)
+  text <- text[valid & !is.na(text) & nzchar(text)]
+  length(unique(text)) <= 1L
 }
 
 mellio_ggplot_smooth_line <- function(data) {

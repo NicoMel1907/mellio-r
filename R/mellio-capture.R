@@ -9,9 +9,15 @@
 #' @export
 #' @family R bridge
 #' @examples
-#' \dontrun{
-#' plot(mtcars$wt, mtcars$mpg)
-#' mellio_capture(title = "Fuel efficiency by weight", number = 1)
+#' \donttest{
+#' if (interactive()) {
+#'   plot(mtcars$wt, mtcars$mpg)
+#'   mellio_capture(
+#'     title = "Fuel efficiency by weight",
+#'     number = 1,
+#'     browse = FALSE
+#'   )
+#' }
 #' }
 mellio_capture <- function(...) {
   if (is.null(grDevices::dev.list())) {

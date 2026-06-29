@@ -8,11 +8,13 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' model <- lm(mpg ~ wt + hp, data = mtcars)
-#' tab <- melliotab(model, title = "Regression Results")
-#' mt_copy(tab)
-#' # Now paste into Word
+#' \donttest{
+#' if (interactive()) {
+#'   model <- lm(mpg ~ wt + hp, data = mtcars)
+#'   tab <- melliotab(model, title = "Regression Results")
+#'   mt_copy(tab)
+#'   # Now paste into Word
+#' }
 #' }
 mt_copy <- function(x) {
   if (!inherits(x, "melliotab")) {

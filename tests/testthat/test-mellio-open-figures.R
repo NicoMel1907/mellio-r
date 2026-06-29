@@ -101,6 +101,32 @@ test_that("mellio_open sends simple ggplots with editable raw scatter data", {
   expect_length(scatter$points, nrow(mtcars))
 })
 
+test_that("ggplot editable raw scatter cap covers 1450 points", {
+  testthat::skip_if_not_installed("ggplot2")
+
+  set.seed(20260623)
+  df <- data.frame(
+    x = rnorm(1450),
+    y = rnorm(1450),
+    group = factor(sample(c("A", "B", "C"), 1450, replace = TRUE))
+  )
+  p <- ggplot2::ggplot(df, ggplot2::aes(x, y, colour = group)) +
+    ggplot2::geom_point()
+
+  payload <- mellio_ggplot_raw_scatter_payload(p)
+  expect_length(payload$figure_data$raw_scatter$points, 1450)
+
+  extra <- data.frame(
+    x = seq_len(51),
+    y = seq_len(51),
+    group = factor(rep("A", 51), levels = levels(df$group))
+  )
+  too_many <- rbind(df, extra)
+  p_too_many <- ggplot2::ggplot(too_many, ggplot2::aes(x, y, colour = group)) +
+    ggplot2::geom_point()
+  expect_null(mellio_ggplot_raw_scatter_payload(p_too_many))
+})
+
 test_that("mellio_open sends ggplot count bars as editable bar charts", {
   testthat::skip_if_not_installed("ggplot2")
   withr::local_options(list(mellio.editor_url = "https://example.com"))
@@ -186,6 +212,115 @@ test_that("mellio_open sends ggplot lm smooths as editable regression scatterplo
   expect_true(all(vapply(scatter$fit$line, function(point) {
     !is.null(point$lower) && !is.null(point$upper)
   }, logical(1))))
+})
+
+test_that("mellio_open sends ggplot pointranges as editable error-bar plots", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  df <- data.frame(
+    group = c("Control", "Treatment"),
+    mean = c(3.2, 4.7),
+    lower = c(2.9, 4.3),
+    upper = c(3.5, 5.1)
+  )
+  p <- ggplot2::ggplot(
+    df,
+    ggplot2::aes(group, mean, ymin = lower, ymax = upper)
+  ) +
+    ggplot2::geom_pointrange() +
+    ggplot2::labs(x = "Condition", y = "Mean score")
+
+  url <- mellio_open(p, title = "Mean scores by condition", browse = FALSE)
+
+  expect_figure_url(url, "Mean scores by condition")
+  expect_match(url, "figureType=adjusted_means", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  plot <- payload$figure_data$adjusted_means
+  expect_equal(payload$metadata$available_figures[[1]]$type, "adjusted_means")
+  expect_equal(plot$source, "r_ggplot_summary")
+  expect_equal(plot$ci_method, "source_bounds")
+  expect_equal(plot$factor$label, "Condition")
+  expect_equal(plot$y_label, "Mean score")
+  expect_equal(vapply(plot$groups, `[[`, numeric(1), "mean"), df$mean)
+  expect_equal(vapply(plot$groups, `[[`, numeric(1), "ci_lower"), df$lower)
+  expect_equal(vapply(plot$groups, `[[`, numeric(1), "ci_upper"), df$upper)
+})
+
+test_that("mellio_open sends ggplot point plus errorbar layers as editable error-bar plots", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  df <- data.frame(
+    group = c("Control", "Treatment"),
+    mean = c(3.2, 4.7),
+    lower = c(2.9, 4.3),
+    upper = c(3.5, 5.1)
+  )
+  p <- ggplot2::ggplot(df, ggplot2::aes(group, mean)) +
+    ggplot2::geom_point() +
+    ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper)) +
+    ggplot2::labs(x = "Condition", y = "Mean score")
+
+  url <- mellio_open(p, title = "Mean scores by condition", browse = FALSE)
+
+  expect_figure_url(url, "Mean scores by condition")
+  expect_match(url, "figureType=adjusted_means", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  plot <- payload$figure_data$adjusted_means
+  expect_equal(plot$factor$label, "Condition")
+  expect_equal(vapply(plot$groups, `[[`, character(1), "level"),
+               c("Control", "Treatment"))
+  expect_equal(vapply(plot$groups, `[[`, numeric(1), "ci_upper"), df$upper)
+})
+
+test_that("mellio_open sends simple ggplot boxplots as editable box plots", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(mtcars, ggplot2::aes(y = mpg)) +
+    ggplot2::geom_boxplot() +
+    ggplot2::labs(y = "Miles per gallon")
+
+  url <- mellio_open(p, title = "Miles per gallon distribution", browse = FALSE)
+
+  expect_figure_url(url, "Miles per gallon distribution")
+  expect_match(url, "figureType=box_plot", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  distribution <- payload$figure_data$distribution
+  expect_equal(payload$metadata$available_figures[[1]]$type, "box_plot")
+  expect_equal(distribution$variable, "Miles per gallon")
+  expect_length(distribution$values, nrow(mtcars))
+  expect_equal(distribution$box$median, unname(stats::quantile(mtcars$mpg, 0.5)))
+  expect_true(!is.null(distribution$box$whisker_lo))
+  expect_true(!is.null(distribution$box$whisker_hi))
+})
+
+test_that("mellio_open sends grouped ggplot boxplots as editable distribution plots", {
+  testthat::skip_if_not_installed("ggplot2")
+  withr::local_options(list(mellio.editor_url = "https://example.com"))
+
+  p <- ggplot2::ggplot(
+    mtcars,
+    ggplot2::aes(factor(cyl), mpg, fill = factor(cyl))
+  ) +
+    ggplot2::geom_boxplot() +
+    ggplot2::labs(x = "Cylinders", y = "Miles per gallon")
+
+  url <- mellio_open(p, title = "Fuel efficiency by cylinders", browse = FALSE)
+
+  expect_figure_url(url, "Fuel efficiency by cylinders")
+  expect_match(url, "figureType=nonparametric_group_plot", fixed = TRUE)
+  payload <- decode_figure_payload(url)
+  plot <- payload$figure_data$nonparametric_group_plot
+  expect_equal(payload$metadata$available_figures[[1]]$type, "nonparametric_group_plot")
+  expect_equal(plot$source, "r_ggplot_boxplot")
+  expect_equal(plot$factor$label, "Cylinders")
+  expect_equal(plot$y_label, "Miles per gallon")
+  expect_equal(vapply(plot$groups, `[[`, character(1), "level"), c("4", "6", "8"))
+  expect_equal(vapply(plot$groups, `[[`, numeric(1), "whisker_lo"),
+               c(21.4, 17.8, 13.3))
+  expect_length(plot$observations, nrow(mtcars))
 })
 
 test_that("mellio_open keeps complex ggplots as static figure fallbacks", {

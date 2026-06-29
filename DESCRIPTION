@@ -1,19 +1,19 @@
 Package: mellio
 Title: Polished, Editable Tables and Statistical Results
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: person("Melih", "Sahin", role = c("aut", "cre"),
                   email = "nicomelpro@pm.me")
-Description: Sends supported R objects to the Mellio web app and creates
-    polished, editable statistical tables in R. The mellio_open() interface
+Description: Sends supported 'R' objects to the 'Mellio' web app and creates
+    polished, editable statistical tables in 'R'. The 'mellio_open' interface
     handles common hypothesis tests, model objects, model comparisons,
     descriptive summaries, tabular data, plots, and image files. The
-    melliotab() interface formats data frames, model summaries, correlation
+    'melliotab' interface formats data frames, model summaries, correlation
     matrices, and side-by-side comparison tables with APA-style numeric
     formatting, confidence intervals, table notes, and optional significance
-    markers. Manual table helpers can copy or save melliotab output as HTML,
-    LaTeX, or Markdown when file-based handoff is needed. Payloads include
-    package-version metadata to support reproducible reporting and software
-    citation.
+    markers. Manual table helpers can copy or save 'melliotab' output as
+    'HTML', 'LaTeX', or 'Markdown' when file-based handoff is needed.
+    Payloads include package-version metadata to support reproducible
+    reporting and software citation.
 License: MIT + file LICENSE
 URL: https://www.mellioapp.com, https://github.com/NicoMel1907/mellio-r
 BugReports: https://github.com/NicoMel1907/mellio-r/issues

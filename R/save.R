@@ -11,14 +11,16 @@
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' model <- lm(mpg ~ wt + hp, data = mtcars)
 #' tbl <- melliotab(model, style = "apa7", title = "Results")
 #'
-#' mt_save(tbl, "table.html")
-#' mt_save(tbl, "table.tex")
-#' mt_save(tbl, "table.md")
-#' }
+#' html_file <- tempfile(fileext = ".html")
+#' tex_file <- tempfile(fileext = ".tex")
+#' md_file <- tempfile(fileext = ".md")
+#'
+#' mt_save(tbl, html_file)
+#' mt_save(tbl, tex_file)
+#' mt_save(tbl, md_file)
 mt_save <- function(x, filename, ...) {
   if (!inherits(x, "melliotab")) {
     cli::cli_abort("{.arg x} must be a melliotab object.")

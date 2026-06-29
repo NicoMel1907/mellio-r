@@ -17,10 +17,12 @@ Copies the formatted table to the clipboard as rich HTML so it can be
 pasted into Word with formatting preserved.
 }
 \examples{
-\dontrun{
-model <- lm(mpg ~ wt + hp, data = mtcars)
-tab <- melliotab(model, title = "Regression Results")
-mt_copy(tab)
-# Now paste into Word
+\donttest{
+if (interactive()) {
+  model <- lm(mpg ~ wt + hp, data = mtcars)
+  tab <- melliotab(model, title = "Regression Results")
+  mt_copy(tab)
+  # Now paste into Word
+}
 }
 }

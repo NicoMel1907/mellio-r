@@ -1,3 +1,11 @@
+# mellio 1.0.1
+
+Documentation-only CRAN resubmission of the initial public release.
+
+* Updated package/software/API name formatting in `DESCRIPTION` for CRAN.
+* Revised examples in R help pages to follow CRAN guidance.
+* No user-facing behavior changes.
+
 # mellio 1.0.0
 
 Initial public release.

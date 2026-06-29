@@ -24,10 +24,14 @@
 #' @export
 #' @family R bridge
 #' @examples
-#' \dontrun{
-#' # Highlight   t.test(extra ~ group, data = sleep)   in RStudio
-#' # → Addins menu → Send to Mellio
-#' mellio_addin_send()
+#' \donttest{
+#' if (interactive() &&
+#'     requireNamespace("rstudioapi", quietly = TRUE) &&
+#'     rstudioapi::isAvailable()) {
+#'   # Highlight   t.test(extra ~ group, data = sleep)   in RStudio
+#'   # Addins menu -> Send to Mellio
+#'   mellio_addin_send()
+#' }
 #' }
 mellio_addin_send <- function() {
   rlang::check_installed("rstudioapi",
