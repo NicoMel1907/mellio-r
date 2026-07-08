@@ -1591,7 +1591,7 @@ ms_lavaan_inference_meta <- function(fit, pe = NULL) {
   boot <- any(grepl("boot", se, fixed = TRUE))
   out <- list(boot = isTRUE(boot))
 
-  sims <- ms_safe_numeric(opts$bootstrap %||% NA_real_)
+  sims <- ms_lavaan_bootstrap_sims(fit, opts)
   if (isTRUE(boot) && !is.na(sims) && is.finite(sims) && sims > 0) {
     out$sims <- as.integer(round(sims))
   }
@@ -1611,6 +1611,27 @@ ms_lavaan_inference_meta <- function(fit, pe = NULL) {
   }
 
   out
+}
+
+ms_lavaan_bootstrap_sims <- function(fit, opts = NULL) {
+  bootstrap <- tryCatch(opts$bootstrap, error = function(e) NULL)
+  if (is.list(bootstrap)) bootstrap <- bootstrap[["R"]]
+  sims <- ms_lavaan_single_numeric(bootstrap)
+  if (!is.na(sims)) return(sims)
+
+  boot <- tryCatch(lavaan::lavInspect(fit, "bootstrap"), error = function(e) NULL)
+  if (is.matrix(boot) || is.data.frame(boot)) {
+    n <- nrow(boot)
+    if (!is.null(n) && is.finite(n) && n > 0) return(as.numeric(n))
+  }
+  NA_real_
+}
+
+ms_lavaan_single_numeric <- function(x) {
+  if (is.null(x) || length(x) == 0L) return(NA_real_)
+  x <- suppressWarnings(as.numeric(x[[1L]]))
+  if (length(x) == 0L || !is.finite(x)) return(NA_real_)
+  x
 }
 
 # Identify the user-facing estimator label (ML / MLM / MLMV / MLR /

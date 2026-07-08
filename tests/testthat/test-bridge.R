@@ -1570,6 +1570,33 @@ test_that("lavaan CFA with default ML estimator does not tag scaled fit indices"
   for (entry in fi) expect_null(entry$scaled)
 })
 
+test_that("lavaan bootstrap metadata supports numeric and list option shapes", {
+  skip_if_lavaan_unusable()
+  suppressWarnings(suppressMessages(library(lavaan)))
+  HS.model <- "visual =~ x1 + x2 + x3"
+  fit <- suppressWarnings(cfa(
+    HS.model, data = HolzingerSwineford1939,
+    se = "bootstrap", bootstrap = 3L
+  ))
+  numeric_payload <- suppressWarnings(mellio_payload(fit))
+
+  list_fit <- fit
+  list_fit@Options$bootstrap <- list(R = 3L, type = "ordinary",
+                                     show.progress = FALSE)
+  list_payload <- suppressWarnings(mellio_payload(list_fit))
+
+  expect_true(isTRUE(numeric_payload$fields$boot))
+  expect_true(isTRUE(list_payload$fields$boot))
+  expect_equal(numeric_payload$fields$sims, 3L)
+  expect_equal(list_payload$fields$sims, 3L)
+  expect_equal(list_payload$type, numeric_payload$type)
+  expect_equal(list_payload$card_kind, numeric_payload$card_kind)
+  expect_equal(
+    length(list_payload$fields$inspection_zone$parameters),
+    length(numeric_payload$fields$inspection_zone$parameters)
+  )
+})
+
 test_that("lavaan CFA with MLR prefers scaled fit indices and tags estimator", {
   skip_if_lavaan_unusable()
   suppressWarnings(suppressMessages(library(lavaan)))

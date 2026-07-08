@@ -1,3 +1,9 @@
+# mellio 1.0.2
+
+* Fixed lavaan bootstrap metadata extraction so Mellio supports both the
+  existing numeric `bootstrap` option and the list-shaped `bootstrap` option
+  introduced in lavaan 0.7-1.
+
 # mellio 1.0.1
 
 CRAN resubmission and figure handoff improvements.
