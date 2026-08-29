@@ -1,3 +1,15 @@
+# mellio 1.1.0
+
+* Added Johnson-Neyman and simple-slopes support: `mellio_open()` and
+  `melliotab()` now accept `johnson_neyman()` and `sim_slopes()` results from
+  the 'interactions' package. Results open as a Stats card with the interval
+  narration and a key-point table, plus a native, fully editable
+  Johnson-Neyman figure in the web app (significance-colored slope and
+  confidence band, interval bounds, observed moderator range, legend).
+* Long Mellio URLs now open through a small local redirect page. Some URL
+  launchers (notably inside RStudio) silently truncate very long URLs, which
+  dropped the result payload; the redirect file sidesteps the limit.
+
 # mellio 1.0.2
 
 * Fixed lavaan bootstrap metadata extraction so Mellio supports both the

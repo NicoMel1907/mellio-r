@@ -1,6 +1,6 @@
 Package: mellio
 Title: Polished, Editable Tables and Statistical Results
-Version: 1.0.2
+Version: 1.1.0
 Authors@R: person("Melih", "Sahin", role = c("aut", "cre"),
                   email = "nicomelpro@pm.me")
 Description: Sends supported 'R' objects to the 'Mellio' web app and creates
