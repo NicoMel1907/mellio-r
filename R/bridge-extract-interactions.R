@@ -151,18 +151,22 @@ ms_jn_analytic <- function(x) {
 
 # Thin cbands to at most `points` rows: the client-side fallback when the
 # analytic recovery is unavailable, and the parity reference in tests.
+# Values are rounded to 8 significant digits — full doubles serialize at
+# ~17 chars each and URL launchers truncate long URLs, so the curve is the
+# payload's dominant weight.
 ms_jn_curve <- function(x, points = 81L) {
   cols <- ms_jn_columns(x)
   if (is.null(cols)) return(NULL)
   cb <- cols$cb
   n <- nrow(cb)
   idx <- unique(as.integer(round(seq(1L, n, length.out = min(points, n)))))
+  sig8 <- function(v) ms_safe_numeric(signif(as.numeric(v), 8))
   lapply(idx, function(i) {
     list(
-      m = ms_safe_numeric(as.numeric(cb[[cols$modx_col]][i])),
-      slope = ms_safe_numeric(as.numeric(cb[[cols$slope_col]][i])),
-      ci_lower = ms_safe_numeric(as.numeric(cb$Lower[i])),
-      ci_upper = ms_safe_numeric(as.numeric(cb$Upper[i]))
+      m = sig8(cb[[cols$modx_col]][i]),
+      slope = sig8(cb[[cols$slope_col]][i]),
+      ci_lower = sig8(cb$Lower[i]),
+      ci_upper = sig8(cb$Upper[i])
     )
   })
 }
@@ -343,7 +347,10 @@ ms_jn_figure_data <- function(x) {
   grid_m <- as.numeric(cols$cb[[cols$modx_col]])
   grid_range <- range(grid_m[is.finite(grid_m)])
   analytic <- ms_jn_analytic(x)
-  curve <- ms_jn_curve(x)
+  # With a validated analytic form the client draws from the parameters and
+  # the curve is only a parity reference/fallback — 21 points suffice and
+  # keep the URL short. Without it, ship the full 81-point fallback.
+  curve <- ms_jn_curve(x, points = if (is.null(analytic)) 81L else 21L)
   if (is.null(curve) || length(curve) < 2) return(NULL)
 
   out <- list(

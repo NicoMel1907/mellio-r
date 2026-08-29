@@ -36,11 +36,33 @@ ms_warn_missing_script <- function(payload) {
   invisible()
 }
 
+# RStudio's URL launcher (and macOS Launch Services) silently truncates very
+# long URLs, which drops the #payload fragment: the app opens on stale state
+# with no error anywhere. Long URLs go through a tiny local redirect page
+# instead - the file:// path stays short and the in-browser redirect has no
+# length limit.
+ms_browse_url <- function(url) {
+  if (nchar(url) <= 4000L) {
+    return(utils::browseURL(url))
+  }
+  path <- tempfile("mellio-open-", fileext = ".html")
+  html <- paste0(
+    "<!DOCTYPE html><meta charset=\"utf-8\">",
+    "<title>Opening Mellio…</title>",
+    "<script>location.replace(",
+    jsonlite::toJSON(url, auto_unbox = TRUE),
+    ");</script>",
+    "<p>Opening Mellio…</p>"
+  )
+  writeLines(html, path, useBytes = TRUE)
+  utils::browseURL(path)
+}
+
 send_payload_to_stats <- function(payload, browse = TRUE) {
   url <- ms_stats_url(payload)
 
   if (isTRUE(browse) && interactive()) {
-    utils::browseURL(url)
+    ms_browse_url(url)
   }
 
   if (interactive()) {

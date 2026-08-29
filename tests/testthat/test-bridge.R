@@ -5855,7 +5855,8 @@ test_that("johnson_neyman produces a table Result Card with an analytic figure",
   expect_gte(length(fig$curve), 2L)
   # Analytic parity against the shipped curve points.
   a <- fig$analytic
-  for (pt in fig$curve[c(1, 40, length(fig$curve))]) {
+  mid <- as.integer(ceiling(length(fig$curve) / 2))
+  for (pt in fig$curve[c(1L, mid, length(fig$curve))]) {
     slope_hat <- a$s0 + a$s1 * pt$m
     half_hat <- sqrt(max(a$w0 + a$w1 * pt$m + a$w2 * pt$m^2, 0))
     expect_lt(abs(slope_hat - pt$slope), 1e-6)

@@ -152,7 +152,7 @@ send_figure_to_mellio <- function(x, browse = TRUE) {
       "i" = "Opening figure in Mellio..."
     ))
 
-    utils::browseURL(url)
+    ms_browse_url(url)
   }
 
   invisible(url)
@@ -249,7 +249,7 @@ send_table_to_mellio <- function(x, browse = TRUE) {
       "i" = "Opening table in Mellio..."
     ))
 
-    utils::browseURL(url)
+    ms_browse_url(url)
   }
 
   invisible(url)
