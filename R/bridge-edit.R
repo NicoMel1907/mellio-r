@@ -55,7 +55,16 @@ ms_browse_url <- function(url) {
     "<p>Opening Mellio…</p>"
   )
   writeLines(html, path, useBytes = TRUE)
-  utils::browseURL(path)
+  # RStudio replaces options(browser=) with its own launcher, which both
+  # truncates long URLs and can route local files into the IDE instead of
+  # the system browser. On macOS go straight to /usr/bin/open (what
+  # browseURL uses outside RStudio anyway); elsewhere fall back.
+  if (identical(Sys.info()[["sysname"]], "Darwin")) {
+    system2("open", shQuote(path), wait = FALSE)
+  } else {
+    utils::browseURL(path)
+  }
+  invisible(path)
 }
 
 send_payload_to_stats <- function(payload, browse = TRUE) {
