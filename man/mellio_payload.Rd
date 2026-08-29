@@ -5,12 +5,13 @@
 %   R/bridge-extract-descriptive.R, R/bridge-extract-efa.R,
 %   R/bridge-extract-effectsize.R, R/bridge-extract-fitdiff.R,
 %   R/bridge-extract-gee.R, R/bridge-extract-glmer.R, R/bridge-extract-htest.R,
-%   R/bridge-extract-lavaan.R, R/bridge-extract-lm.R, R/bridge-extract-lmer.R,
-%   R/bridge-extract-manova.R, R/bridge-extract-mediation.R,
-%   R/bridge-extract-multinom.R, R/bridge-extract-ordinal.R,
-%   R/bridge-extract-pairwise.R, R/bridge-extract-processR.R,
-%   R/bridge-extract-psych.R, R/bridge-extract-survfit.R,
-%   R/bridge-extract-timeseries.R, R/bridge-payload.R
+%   R/bridge-extract-interactions.R, R/bridge-extract-lavaan.R,
+%   R/bridge-extract-lm.R, R/bridge-extract-lmer.R, R/bridge-extract-manova.R,
+%   R/bridge-extract-mediation.R, R/bridge-extract-multinom.R,
+%   R/bridge-extract-ordinal.R, R/bridge-extract-pairwise.R,
+%   R/bridge-extract-processR.R, R/bridge-extract-psych.R,
+%   R/bridge-extract-survfit.R, R/bridge-extract-timeseries.R,
+%   R/bridge-payload.R
 \name{mellio_payload}
 \alias{mellio_payload}
 \alias{mellio_payload.aov}
@@ -43,6 +44,8 @@
 \alias{mellio_payload.geeglm}
 \alias{mellio_payload.glmerMod}
 \alias{mellio_payload.htest}
+\alias{mellio_payload.johnson_neyman}
+\alias{mellio_payload.sim_slopes}
 \alias{mellio_payload.lavaan}
 \alias{mellio_payload.lm}
 \alias{mellio_payload.lmerMod}
@@ -168,6 +171,10 @@
 )
 
 \method{mellio_payload}{htest}(x, .data = NULL, ..., .call = NULL, .env = parent.frame())
+
+\method{mellio_payload}{johnson_neyman}(x, ..., .call = NULL)
+
+\method{mellio_payload}{sim_slopes}(x, ..., .call = NULL)
 
 \method{mellio_payload}{lavaan}(
   x,

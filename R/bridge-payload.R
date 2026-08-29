@@ -712,6 +712,13 @@ ms_attach_existing_figure_metadata <- function(payload) {
       label = "SEM path diagram"
     )
   }
+  if (!is.null(figure_data$johnson_neyman_plot)) {
+    payload <- ms_add_available_figure(
+      payload,
+      type = "johnson_neyman_plot",
+      label = "Johnson-Neyman plot"
+    )
+  }
   payload
 }
 

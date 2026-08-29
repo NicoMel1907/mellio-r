@@ -271,3 +271,17 @@ test_that("mellio_open sends ggplot objects through Figures", {
   expect_match(url, "imageData=", fixed = TRUE)
   expect_match(url, "figTitle=Weight%20and%20mpg", fixed = TRUE)
 })
+
+test_that("johnson_neyman routes to Stats", {
+  skip_if_not_installed("interactions")
+  set.seed(42)
+  d <- data.frame(x = rnorm(120), m = rnorm(120))
+  d$y <- 0.3 * d$x + 0.4 * d$x * d$m + rnorm(120)
+  jn <- interactions::johnson_neyman(lm(y ~ x * m, data = d), pred = "x", modx = "m")
+
+  url <- mellio_open(jn, browse = FALSE)
+  expect_match(url, "#stats/payload=", fixed = TRUE)
+  payload <- decode_stats_payload_url(url)
+  expect_equal(payload$type, "johnson_neyman")
+  expect_equal(payload$metadata$available_figures[[1]]$type, "johnson_neyman_plot")
+})

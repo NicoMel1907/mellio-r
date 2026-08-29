@@ -5808,3 +5808,132 @@ test_that("anova nested lm calls surface formula variables when available", {
   expect_equal(p$fields$outcome, "mpg")
   expect_equal(p$fields$predictor, "wt")
 })
+
+# ── interactions: johnson_neyman + sim_slopes ────────────────────────────────
+
+ms_test_jn_fixture <- function() {
+  set.seed(42)
+  d <- data.frame(x = rnorm(200), m = rnorm(200))
+  d$y <- 0.3 * d$x + 0.2 * d$m + 0.4 * d$x * d$m + rnorm(200)
+  list(data = d, model = lm(y ~ x * m, data = d))
+}
+
+test_that("johnson_neyman produces a table Result Card with an analytic figure", {
+  skip_if_not_installed("interactions")
+  fx <- ms_test_jn_fixture()
+  jn <- interactions::johnson_neyman(fx$model, pred = "x", modx = "m",
+                                     alpha = 0.05, control.fdr = TRUE)
+
+  p <- mellio_payload(jn, .call = "johnson_neyman(mod, pred = 'x', modx = 'm')")
+  expect_equal(p$type, "johnson_neyman")
+  expect_equal(p$card_kind, "table")
+  expect_equal(p$fields$table_type, "johnson_neyman")
+  expect_equal(p$fields$pred, "x")
+  expect_equal(p$fields$modx, "m")
+  expect_true(p$fields$control_fdr)
+  expect_false(p$fields$inside)
+  expect_true(is.finite(p$fields$bound_lower))
+  expect_true(is.finite(p$fields$critical_t))
+  expect_match(p$fields$note, "outside the interval")
+  expect_match(p$fields$note, "false discovery rate")
+
+  # Key-point rows: observed extremes + both bounds, ordered by moderator.
+  points <- vapply(p$fields$rows, function(row) row$point, character(1))
+  expect_equal(points, c("Min. observed", "J-N lower bound",
+                         "J-N upper bound", "Max. observed"))
+  # At a J-N bound the CI must touch zero by definition.
+  bound_row <- p$fields$rows[[2]]
+  expect_lt(abs(bound_row$ci_upper), 1e-6)
+  expect_match(bound_row$significance, "boundary")
+
+  # Figure: registered, analytic form present, curve thinned.
+  expect_equal(p$metadata$available_figures[[1]]$type, "johnson_neyman_plot")
+  expect_true(isTRUE(p$metadata$available_figures[[1]]$default))
+  fig <- p$figure_data$johnson_neyman_plot
+  expect_false(is.null(fig$analytic))
+  expect_lte(length(fig$curve), 81L)
+  expect_gte(length(fig$curve), 2L)
+  # Analytic parity against the shipped curve points.
+  a <- fig$analytic
+  for (pt in fig$curve[c(1, 40, length(fig$curve))]) {
+    slope_hat <- a$s0 + a$s1 * pt$m
+    half_hat <- sqrt(max(a$w0 + a$w1 * pt$m + a$w2 * pt$m^2, 0))
+    expect_lt(abs(slope_hat - pt$slope), 1e-6)
+    expect_lt(abs((slope_hat + half_hat) - pt$ci_upper), 1e-6)
+  }
+  # Recomputed bounds from the analytic form match the shipped bounds.
+  A <- a$s1^2 - a$w2; B <- 2 * a$s0 * a$s1 - a$w1; C <- a$s0^2 - a$w0
+  roots <- sort(c((-B - sqrt(B^2 - 4 * A * C)) / (2 * A),
+                  (-B + sqrt(B^2 - 4 * A * C)) / (2 * A)))
+  expect_lt(abs(roots[1] - fig$bounds$lower), 1e-6)
+  expect_lt(abs(roots[2] - fig$bounds$upper), 1e-6)
+
+  pkg_names <- vapply(p$packages, `[[`, character(1), "name")
+  expect_true("interactions" %in% pkg_names)
+})
+
+test_that("johnson_neyman all-significant edge is narrated, not misread as an interval", {
+  skip_if_not_installed("interactions")
+  fx <- ms_test_jn_fixture()
+  d <- fx$data
+  d$ya <- 2 * d$x + 0.01 * d$x * d$m + rnorm(200, sd = 0.2)
+  jn <- interactions::johnson_neyman(lm(ya ~ x * m, data = d), pred = "x", modx = "m")
+
+  p <- mellio_payload(jn)
+  expect_true(p$fields$all_sig)
+  expect_match(p$fields$note, "entire observed range")
+  expect_true(isTRUE(p$figure_data$johnson_neyman_plot$all_sig))
+})
+
+test_that("sim_slopes produces a slopes table and embeds the J-N figure", {
+  skip_if_not_installed("interactions")
+  fx <- ms_test_jn_fixture()
+  ss <- interactions::sim_slopes(fx$model, pred = "x", modx = "m",
+                                 johnson_neyman = TRUE)
+
+  p <- mellio_payload(ss, .call = "sim_slopes(mod, pred = 'x', modx = 'm')")
+  expect_equal(p$type, "simple_slopes")
+  expect_equal(p$card_kind, "table")
+  expect_equal(length(p$fields$rows), 3L)
+  expect_equal(p$fields$statistic_label, "t")
+  expect_equal(p$fields$outcome, "y")
+  levels <- vapply(p$fields$rows, function(row) row$level, character(1))
+  expect_equal(levels, c("- 1 SD", "Mean", "+ 1 SD"))
+  expect_true(all(vapply(p$fields$rows, function(row) is.finite(row$p_value), logical(1))))
+  expect_false(is.null(p$figure_data$johnson_neyman_plot))
+  expect_match(p$fields$note, "Conditional slopes")
+})
+
+test_that("three-way sim_slopes keeps all slope tables and skips the figure", {
+  skip_if_not_installed("interactions")
+  fx <- ms_test_jn_fixture()
+  d <- fx$data
+  set.seed(7)
+  d$z <- rnorm(200)
+  d$y3 <- 0.3 * d$x + 0.4 * d$x * d$m + 0.2 * d$x * d$m * d$z + rnorm(200)
+  ss <- interactions::sim_slopes(lm(y3 ~ x * m * z, data = d),
+                                 pred = "x", modx = "m", mod2 = "z",
+                                 johnson_neyman = TRUE)
+
+  p <- mellio_payload(ss)
+  expect_equal(length(p$fields$rows), 9L)
+  expect_equal(p$fields$columns[[1]]$key, "mod2_label")
+  expect_null(p$figure_data)
+  expect_false(is.null(p$fields$rows[[1]]$mod2_label))
+})
+
+test_that("glm johnson_neyman keeps the analytic form and z statistic", {
+  skip_if_not_installed("interactions")
+  fx <- ms_test_jn_fixture()
+  d <- fx$data
+  set.seed(9)
+  d$yb <- rbinom(200, 1, plogis(0.5 * d$x + 0.6 * d$x * d$m))
+  gm <- glm(yb ~ x * m, data = d, family = binomial)
+
+  p <- mellio_payload(interactions::johnson_neyman(gm, pred = "x", modx = "m"))
+  expect_false(is.null(p$figure_data$johnson_neyman_plot$analytic))
+
+  ps <- mellio_payload(interactions::sim_slopes(gm, pred = "x", modx = "m",
+                                                johnson_neyman = FALSE))
+  expect_equal(ps$fields$statistic_label, "z")
+})
