@@ -15,7 +15,8 @@ In this version I have:
 
 * local macOS (aarch64-apple-darwin20), R 4.4.0
   (`R CMD check --as-cran`, with `_R_CHECK_FORCE_SUGGESTS_=false`)
-* win-builder (to be filled in after the win-builder run)
+* win-builder, R-release 4.6.1 (2026-06-24 ucrt) — Status: OK
+* win-builder, R-devel (2026-08-27 r90452 ucrt) — Status: OK
 
 ## R CMD check results
 
