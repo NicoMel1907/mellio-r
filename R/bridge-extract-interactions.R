@@ -306,12 +306,14 @@ ms_jn_key_rows <- function(x) {
 
   rows <- lapply(points, function(p) {
     est <- eval_at(p$m)
+    # Display rows only — the figure keeps full precision in figure_data.
+    # The web app's "ci" cell format pastes values verbatim, so round here.
     list(
       point = p$label,
-      modx_value = ms_safe_numeric(p$m),
-      estimate = ms_safe_numeric(est$slope),
-      ci_lower = ms_safe_numeric(est$lower),
-      ci_upper = ms_safe_numeric(est$upper),
+      modx_value = ms_safe_numeric(round(p$m, 2)),
+      estimate = ms_safe_numeric(round(est$slope, 2)),
+      ci_lower = ms_safe_numeric(round(est$lower, 2)),
+      ci_upper = ms_safe_numeric(round(est$upper, 2)),
       significance = if (p$boundary) {
         paste0("boundary (p = ", ms_jn_format(alpha), ")")
       } else {
@@ -405,8 +407,9 @@ ms_sim_slopes_rows <- function(x) {
         modx_value = value,
         estimate = ms_safe_numeric(as.numeric(df[["Est."]][ri])),
         se = ms_safe_numeric(as.numeric(df[["S.E."]][ri])),
-        ci_lower = ms_safe_numeric(as.numeric(df[[ci_cols[1]]][ri])),
-        ci_upper = ms_safe_numeric(as.numeric(df[[ci_cols[2]]][ri])),
+        # The web app's "ci" cell format pastes values verbatim — round for display.
+        ci_lower = ms_safe_numeric(round(as.numeric(df[[ci_cols[1]]][ri]), 2)),
+        ci_upper = ms_safe_numeric(round(as.numeric(df[[ci_cols[2]]][ri]), 2)),
         statistic = ms_safe_numeric(as.numeric(df[[stat_col]][ri])),
         p_value = ms_safe_numeric(as.numeric(df[["p"]][ri]))
       )
