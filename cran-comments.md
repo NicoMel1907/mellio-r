@@ -1,36 +1,31 @@
 ## Submission
 
-This is a resubmission. In this version I have:
+This is an urgent maintenance release requested by the `lavaan` maintainers.
 
-* wrapped package, software, and API names in single quotes in `DESCRIPTION`;
-* replaced `\dontrun{}` examples with `\donttest{}` examples or executable
-  temporary-file examples, as appropriate; and
-* bumped the package version from 1.0.0 to 1.0.1 for this resubmission.
+In this version I have:
 
-The 1.0.1 release also includes small `ggplot2` figure handoff improvements
-documented in `NEWS.md`.
+* fixed `lavaan` bootstrap metadata extraction so `mellio` supports both the
+  existing numeric `bootstrap` option and the list-shaped `bootstrap` option
+  introduced in `lavaan` 0.7-1; and
+* bumped the package version from 1.0.1 to 1.0.2.
+
+The short interval since the previous CRAN release is intentional because this
+release unblocks `lavaan` reverse-dependency checks.
 
 ## Test environments
 
 * local macOS (aarch64-apple-darwin20), R 4.4.0
-  (`R CMD check --no-manual --ignore-vignettes --no-build-vignettes`,
-  with `_R_CHECK_FORCE_SUGGESTS_=false`)
-* win-builder, R-release 4.6.1 (2026-06-24 ucrt)
-* win-builder, R-devel (2026-06-26 r90195 ucrt)
+  (`R CMD check --as-cran`, with `_R_CHECK_FORCE_SUGGESTS_=false`)
+* win-builder, R-oldrelease 4.5.3 (2026-03-11 ucrt)
 
 ## R CMD check results
 
 0 errors | 0 warnings | 1 note
 
 * checking CRAN incoming feasibility ... NOTE
-  Maintainer: 'Melih Sahin <nicomelpro@pm.me>'
-  New submission
-  Possibly misspelled words in DESCRIPTION:
-    APA (11:55)
+  Days since last update: 2
 
-This note is expected for a first CRAN submission. `APA` is a standard acronym,
-and the package/software/API names in `DESCRIPTION` have been wrapped in single
-quotes as requested in the previous review.
+This note is expected for this urgent maintenance release.
 
 ## Notes for the reviewer
 
