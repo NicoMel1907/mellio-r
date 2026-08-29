@@ -48,11 +48,11 @@ ms_browse_url <- function(url) {
   path <- tempfile("mellio-open-", fileext = ".html")
   html <- paste0(
     "<!DOCTYPE html><meta charset=\"utf-8\">",
-    "<title>Opening Mellio…</title>",
+    "<title>Opening Mellio...</title>",
     "<script>location.replace(",
     jsonlite::toJSON(url, auto_unbox = TRUE),
     ");</script>",
-    "<p>Opening Mellio…</p>"
+    "<p>Opening Mellio...</p>"
   )
   writeLines(html, path, useBytes = TRUE)
   # RStudio replaces options(browser=) with its own launcher, which both
